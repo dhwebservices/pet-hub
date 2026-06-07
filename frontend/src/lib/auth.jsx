@@ -1,0 +1,39 @@
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { api } from "./api";
+
+const AuthCtx = createContext(null);
+
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.get("/auth/me").then(r => setUser(r.data)).catch(() => setUser(null)).finally(() => setLoading(false));
+  }, []);
+
+  const login = async (email, password) => {
+    const { data } = await api.post("/auth/login", { email, password });
+    setUser(data.user);
+    return data.user;
+  };
+  const register = async (payload) => {
+    const { data } = await api.post("/auth/register", payload);
+    setUser(data.user);
+    return data.user;
+  };
+  const logout = async () => {
+    try { await api.post("/auth/logout"); } catch {}
+    setUser(null);
+  };
+
+  return <AuthCtx.Provider value={{ user, loading, login, register, logout, setUser }}>{children}</AuthCtx.Provider>;
+}
+
+export const useAuth = () => useContext(AuthCtx);
+
+export function fmtErr(detail) {
+  if (detail == null) return "Something went wrong";
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail)) return detail.map(e => e?.msg || JSON.stringify(e)).join(" ");
+  return String(detail);
+}

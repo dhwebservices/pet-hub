@@ -1,0 +1,43 @@
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { api } from "../lib/api";
+import { fmtErr, useAuth } from "../lib/auth";
+
+export default function RescueRegister() {
+  const { setUser } = useAuth();
+  const nav = useNavigate();
+  const [f, setF] = useState({ organisation_name:"", contact_name:"", email:"", phone:"", address:"", postcode:"", country:"UK", registration_number:"", password:"" });
+  const [err, setErr] = useState(""); const [loading, setLoading] = useState(false);
+  const set = (k,v) => setF(s => ({...s, [k]: v}));
+  const submit = async (e) => {
+    e.preventDefault(); setErr(""); setLoading(true);
+    try {
+      await api.post("/rescue/register", f);
+      const me = await api.get("/auth/me"); setUser(me.data);
+      nav("/dashboard");
+    } catch(e){ setErr(fmtErr(e.response?.data?.detail) || e.message); } finally { setLoading(false); }
+  };
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-12" data-testid="rescue-register-page">
+      <h1 className="font-display font-extrabold text-3xl text-[var(--gpr-primary)]">Rescue organisation registration</h1>
+      <p className="text-[var(--gpr-muted)] mt-2">Verified rescues can manage cases, contact owners securely and record reunifications.</p>
+      <form onSubmit={submit} className="mt-8 space-y-5">
+        <div><label className="gpr-label">Organisation name</label><input required className="gpr-input" value={f.organisation_name} onChange={e=>set('organisation_name', e.target.value)}/></div>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div><label className="gpr-label">Contact name</label><input required className="gpr-input" value={f.contact_name} onChange={e=>set('contact_name', e.target.value)}/></div>
+          <div><label className="gpr-label">Email</label><input required type="email" className="gpr-input" value={f.email} onChange={e=>set('email', e.target.value)}/></div>
+          <div><label className="gpr-label">Phone</label><input required className="gpr-input" value={f.phone} onChange={e=>set('phone', e.target.value)}/></div>
+          <div><label className="gpr-label">Charity / registration number</label><input className="gpr-input" value={f.registration_number} onChange={e=>set('registration_number', e.target.value)}/></div>
+        </div>
+        <div><label className="gpr-label">Address</label><input required className="gpr-input" value={f.address} onChange={e=>set('address', e.target.value)}/></div>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div><label className="gpr-label">Postcode</label><input required className="gpr-input" value={f.postcode} onChange={e=>set('postcode', e.target.value)}/></div>
+          <div><label className="gpr-label">Country</label><input className="gpr-input" value={f.country} onChange={e=>set('country', e.target.value)}/></div>
+        </div>
+        <div><label className="gpr-label">Password</label><input required type="password" minLength={8} className="gpr-input" value={f.password} onChange={e=>set('password', e.target.value)}/></div>
+        {err && <div className="text-sm text-[var(--gpr-alert)]">{err}</div>}
+        <button data-testid="rescue-submit" disabled={loading} className="gpr-btn-primary w-full">{loading? "Submitting…" : "Register rescue (pending verification)"}</button>
+      </form>
+    </div>
+  );
+}
