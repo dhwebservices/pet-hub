@@ -1,46 +1,48 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../lib/api";
-import { MapPin, Calendar, ArrowUpRight } from "lucide-react";
 
 export default function FoundPets() {
   const [items, setItems] = useState([]);
   useEffect(() => { api.get("/found").then(r=>setItems(r.data)); }, []);
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12" data-testid="found-pets-page">
-      <div className="flex items-end justify-between flex-wrap gap-4">
-        <div>
-          <div className="gpr-eyebrow">Open cases</div>
-          <h1 className="font-display font-extrabold text-3xl text-[var(--gpr-primary)] mt-1">Found pets awaiting owners</h1>
-          <p className="text-[var(--gpr-muted)] mt-2 max-w-xl">Public reports from finders, vets and rescues. If you recognise one, contact us through the report.</p>
+    <div data-testid="found-pets-page">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 md:pt-28 pb-12">
+        <div className="grid md:grid-cols-12 gap-x-10 items-end">
+          <div className="md:col-span-8">
+            <div className="font-mono text-[11px] uppercase tracking-[0.25em] text-[var(--gpr-muted)] mb-6">The Recovery Index · Found</div>
+            <h1 className="font-display font-extrabold text-5xl md:text-7xl text-[var(--gpr-primary)] leading-[0.95]">Pets <em className="accent text-[var(--gpr-success)]">awaiting</em> their owners.</h1>
+            <p className="font-serif italic text-[var(--gpr-muted)] text-lg md:text-xl mt-6 max-w-2xl">Open reports from finders, vets and rescues. If you recognise one, write to the contact on the report — owners are usually within an hour of home.</p>
+          </div>
+          <div className="md:col-span-3 md:col-start-10 mt-6 md:mt-0 text-right">
+            <Link to="/report-found" className="gpr-link">Report a found pet →</Link>
+          </div>
         </div>
-        <Link to="/report-found" className="gpr-link">Report a found pet <ArrowUpRight className="w-4 h-4"/></Link>
-      </div>
-      <div className="mt-10">
+      </section>
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24">
         {items.length === 0 ? (
-          <div className="border-t border-[var(--gpr-border)] pt-8 text-center text-[var(--gpr-muted)]" data-testid="found-empty">No open found reports right now.</div>
+          <div className="border-t border-[var(--gpr-border)] py-20 text-center font-serif italic text-[var(--gpr-muted)]" data-testid="found-empty">No open found reports at this moment.</div>
         ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {items.map(it => (
-              <div key={it.id} data-testid={`found-card-${it.id}`} className="flex flex-col group">
-                <div className="aspect-[4/3] bg-[var(--gpr-secondary)] rounded-md overflow-hidden">
-                  {it.photo_url ? <img src={it.photo_url} alt="" className="w-full h-full object-cover group-hover:scale-[1.02] transition duration-500"/> :
-                    <div className="w-full h-full flex items-center justify-center text-[var(--gpr-muted)] text-sm">No photo</div>}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-16 border-t border-[var(--gpr-border)] pt-16">
+            {items.map((it, i) => (
+              <article key={it.id} data-testid={`found-card-${it.id}`} className="flex flex-col">
+                <div className="font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--gpr-muted)] mb-3">№ {String(i+1).padStart(2,'0')} &middot; {it.created_at?.slice(0,10)}</div>
+                <div className="aspect-[4/5] bg-[var(--gpr-secondary)] overflow-hidden">
+                  {it.photo_url ? <img src={it.photo_url} alt="" className="w-full h-full object-cover"/> :
+                    <div className="w-full h-full flex items-center justify-center text-[var(--gpr-muted)] text-xs">No photograph</div>}
                 </div>
-                <div className="pt-4 flex-1">
-                  <div className="flex items-center justify-between gap-3"><div className="font-display font-bold text-lg capitalize text-[var(--gpr-primary)]">{it.species}</div><span className="gpr-badge-found">Found</span></div>
-                  <div className="text-sm text-[var(--gpr-muted)] mt-1">{it.breed || "Unknown breed"}</div>
-                  <div className="mt-3 space-y-1 text-sm">
-                    <div className="flex items-center gap-2"><MapPin className="w-4 h-4 text-[var(--gpr-muted)]"/>{it.location}</div>
-                    <div className="flex items-center gap-2"><Calendar className="w-4 h-4 text-[var(--gpr-muted)]"/>{it.created_at?.slice(0,10)}</div>
-                  </div>
-                  {it.microchip && <div className="text-xs mt-2 text-[var(--gpr-muted)]">Microchip: {it.microchip}</div>}
+                <div className="mt-5">
+                  <span className="gpr-badge-found">Found</span>
+                  <h3 className="font-display font-extrabold text-2xl text-[var(--gpr-primary)] capitalize mt-2">{it.breed || it.species}</h3>
+                  <p className="font-serif italic text-[var(--gpr-muted)] mt-1">Reported at {it.location}</p>
+                  {it.notes && <p className="text-[15px] text-[var(--gpr-text)] mt-3 leading-[1.6] line-clamp-3">{it.notes}</p>}
+                  {it.microchip && <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-[var(--gpr-muted)] mt-3">Chip · {it.microchip}</p>}
                 </div>
-              </div>
+              </article>
             ))}
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 }
