@@ -2,11 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400;1,9..144,500;1,9..144,600&display=swap');
 @import 'leaflet/dist/leaflet.css';
 
 :root {
-  --gpr-bg: #FDFBF7;
+  --gpr-bg: #F4EFE6;
   --gpr-surface: #FFFFFF;
   --gpr-primary: #1E3F32;
   --gpr-primary-hover: #162D24;
@@ -15,12 +15,12 @@
   --gpr-alert-hover: #B04D35;
   --gpr-success: #3B6954;
   --gpr-text: #1C2421;
-  --gpr-muted: #5F736A;
-  --gpr-border: #E2E8E4;
+  --gpr-muted: #6B7570;
+  --gpr-border: #DBD3C5;
   --gpr-ring: #8CB3A1;
+  --gpr-ink: #1a2922;
 
-  /* shadcn token mapping */
-  --background: 39 39% 98%;
+  --background: 39 35% 93%;
   --foreground: 150 7% 13%;
   --card: 0 0% 100%;
   --card-foreground: 150 7% 13%;
@@ -30,16 +30,16 @@
   --primary-foreground: 0 0% 100%;
   --secondary: 150 12% 91%;
   --secondary-foreground: 150 7% 13%;
-  --muted: 150 12% 95%;
-  --muted-foreground: 150 9% 41%;
-  --accent: 150 12% 91%;
+  --muted: 39 18% 88%;
+  --muted-foreground: 150 6% 43%;
+  --accent: 39 18% 88%;
   --accent-foreground: 150 7% 13%;
   --destructive: 13 56% 52%;
   --destructive-foreground: 0 0% 100%;
-  --border: 150 11% 90%;
-  --input: 150 11% 90%;
+  --border: 35 22% 81%;
+  --input: 35 22% 81%;
   --ring: 150 23% 63%;
-  --radius: 0.5rem;
+  --radius: 0.25rem;
 }
 
 html, body {
@@ -49,28 +49,56 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Paper grain — gives the warm cream background tactile texture */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.1, 0 0 0 0 0.1, 0 0 0 0 0.1, 0 0 0 0.5 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  opacity: 0.05;
+  mix-blend-mode: multiply;
+}
+#root { position: relative; z-index: 2; }
+
 h1, h2, h3, h4, h5, h6, .font-display {
   font-family: 'Manrope', system-ui, sans-serif;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
 }
 
-::selection { background: var(--gpr-secondary); color: var(--gpr-primary); }
+.font-serif { font-family: 'Fraunces', 'EB Garamond', Georgia, serif; }
+em.accent, .serif-accent { font-family: 'Fraunces', Georgia, serif; font-style: italic; font-weight: 500; }
 
-/* Custom scrollbar */
+/* Drop cap */
+.dropcap::first-letter {
+  font-family: 'Fraunces', Georgia, serif;
+  font-style: italic;
+  font-weight: 500;
+  float: left;
+  font-size: 5.2em;
+  line-height: 0.85;
+  padding: 0.08em 0.12em 0 0;
+  color: var(--gpr-primary);
+}
+
+/* Hanging quotes */
+.hang-quote { text-indent: -0.45em; }
+
+::selection { background: var(--gpr-primary); color: #fff; }
 ::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-thumb { background: #cdd6d1; border-radius: 8px; }
+::-webkit-scrollbar-thumb { background: #cdc4b1; border-radius: 8px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--gpr-ring); }
 
-/* Leaflet popup polish */
-.leaflet-popup-content-wrapper { border-radius: 8px; }
+.leaflet-popup-content-wrapper { border-radius: 4px; }
 .leaflet-popup-content { font-family: 'IBM Plex Sans', sans-serif; }
 
 @layer utilities {
-  .gpr-card { @apply bg-white rounded-lg; }
-  .gpr-card-bordered { @apply bg-white border border-[var(--gpr-border)] rounded-lg; }
-  .gpr-rule { @apply border-t border-[var(--gpr-border)]; }
+  /* No more `gpr-card` class chrome by default — kept for legacy */
+  .gpr-card { @apply bg-white rounded-sm; }
+  .gpr-card-bordered { @apply bg-white border border-[var(--gpr-border)] rounded-sm; }
 
-  /* Buttons — editorial, not pill-spammy SaaS */
+  /* Buttons */
   .gpr-btn-primary { background: var(--gpr-primary); color:#fff; @apply inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold tracking-wide rounded-sm transition-colors; }
   .gpr-btn-primary:hover { background: var(--gpr-primary-hover); }
   .gpr-btn-alert { background: var(--gpr-alert); color:#fff; @apply inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold tracking-wide rounded-sm transition-colors; }
@@ -78,17 +106,17 @@ h1, h2, h3, h4, h5, h6, .font-display {
   .gpr-btn-secondary { @apply inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold tracking-wide rounded-sm border border-[var(--gpr-border)] text-[var(--gpr-primary)] bg-transparent transition-colors; }
   .gpr-btn-secondary:hover { border-color: var(--gpr-primary); }
 
-  /* Inline link-style CTA (preferred over buttons most places) */
-  .gpr-link { @apply inline-flex items-center gap-1.5 font-semibold text-[var(--gpr-primary)] pb-0.5 transition-colors; border-bottom: 1px solid rgba(30, 63, 50, 0.3); }
+  .gpr-link { @apply inline-flex items-center gap-1.5 font-semibold text-[var(--gpr-primary)] pb-0.5 transition-colors; border-bottom: 1px solid rgba(30,63,50,0.35); }
   .gpr-link:hover { border-bottom-color: var(--gpr-primary); }
-  .gpr-link-alert { @apply inline-flex items-center gap-1.5 font-semibold text-[var(--gpr-alert)] pb-0.5 transition-colors; border-bottom: 1px solid rgba(200, 90, 64, 0.4); }
+  .gpr-link-alert { @apply inline-flex items-center gap-1.5 font-semibold text-[var(--gpr-alert)] pb-0.5 transition-colors; border-bottom: 1px solid rgba(200,90,64,0.4); }
   .gpr-link-alert:hover { border-bottom-color: var(--gpr-alert); }
 
   .gpr-input { @apply w-full bg-transparent border-0 border-b border-[var(--gpr-border)] px-0 py-3 text-base outline-none transition; }
   .gpr-input:focus { border-color: var(--gpr-primary); }
   .gpr-label { @apply block text-[11px] tracking-[0.2em] uppercase font-semibold text-[var(--gpr-muted)] mb-2; }
-  .gpr-badge-lost { background:#FDF2F0; color:var(--gpr-alert); border:1px solid #FADCD5; @apply rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide; }
-  .gpr-badge-found { background:#F0F5F2; color:var(--gpr-success); border:1px solid #D5E6DD; @apply rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide; }
-  .gpr-badge-registered { background:#F3F4F6; color:#4B5563; border:1px solid #E5E7EB; @apply rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide; }
-  .gpr-eyebrow { @apply text-xs tracking-widest uppercase font-semibold text-[var(--gpr-muted)]; }
+
+  .gpr-badge-lost { background:#FDF2F0; color:var(--gpr-alert); border:1px solid #FADCD5; @apply rounded-sm px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider; }
+  .gpr-badge-found { background:#F0F5F2; color:var(--gpr-success); border:1px solid #D5E6DD; @apply rounded-sm px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider; }
+  .gpr-badge-registered { background:transparent; color:var(--gpr-muted); border:1px solid var(--gpr-border); @apply rounded-sm px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider; }
+  .gpr-eyebrow { @apply text-[11px] tracking-[0.25em] uppercase font-semibold text-[var(--gpr-muted)]; }
 }
