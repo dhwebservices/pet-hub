@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../lib/api";
-import { MapPin, Calendar } from "lucide-react";
+import { MapPin, Calendar, ArrowUpRight } from "lucide-react";
 
 function PetCard({ item }) {
   const p = item.pet || {};
@@ -34,7 +34,7 @@ export default function LostPets() {
           <h1 className="font-display font-extrabold text-3xl text-[var(--gpr-primary)] mt-1">Lost pets near the network</h1>
           <p className="text-[var(--gpr-muted)] mt-2 max-w-xl">Every report is geocoded and emailed to members within a 10-mile radius. Drop a sighting if you spot one.</p>
         </div>
-        <Link to="/report-lost" className="gpr-btn-alert">Report a lost pet</Link>
+        <Link to="/report-lost" className="gpr-link-alert">Report a lost pet <ArrowUpRight className="w-4 h-4"/></Link>
       </div>
       <div className="mt-10">
         {items.length === 0 ? (

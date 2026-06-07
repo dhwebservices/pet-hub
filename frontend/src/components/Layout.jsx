@@ -30,23 +30,26 @@ export default function Layout({ children }) {
               <div className="text-[10px] uppercase tracking-widest text-[var(--gpr-muted)]">Recovery Network</div>
             </div>
           </Link>
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden md:flex items-center gap-8">
             {navItems.map(n => (
               <NavLink key={n.to} to={n.to} data-testid={`nav-${n.label.toLowerCase().replace(/\s/g,'-')}`}
-                className={({isActive}) => `px-3 py-2 rounded-md text-sm font-medium ${isActive ? 'bg-[var(--gpr-secondary)] text-[var(--gpr-primary)]' : 'text-[var(--gpr-muted)] hover:text-[var(--gpr-text)] hover:bg-[var(--gpr-secondary)]/60'}`}>
+                className={({isActive}) => `relative py-2 text-sm font-medium transition-colors ${isActive ? 'text-[var(--gpr-primary)]' : 'text-[var(--gpr-muted)] hover:text-[var(--gpr-text)]'} ${isActive ? 'after:content-[""] after:absolute after:left-0 after:right-0 after:-bottom-px after:h-px after:bg-[var(--gpr-primary)]' : ''}`}>
                 {n.label}
               </NavLink>
             ))}
           </nav>
-          <div className="hidden md:flex items-center gap-2">
-            <Link to="/report-lost" data-testid="header-report-lost" className="gpr-btn-alert text-sm py-2 px-4">Report Lost Pet</Link>
+          <div className="hidden md:flex items-center gap-6">
+            <Link to="/report-lost" data-testid="header-report-lost" className="text-sm font-semibold text-[var(--gpr-alert)] hover:text-[var(--gpr-alert-hover)] inline-flex items-center gap-1.5">
+              <span className="relative flex w-1.5 h-1.5"><span className="animate-ping absolute inline-flex w-full h-full rounded-full bg-[var(--gpr-alert)] opacity-70"/><span className="relative inline-flex w-1.5 h-1.5 rounded-full bg-[var(--gpr-alert)]"/></span>
+              Report a lost pet
+            </Link>
             {user ? (
               <>
-                <Link to={user.role === 'admin' ? '/admin' : '/dashboard'} data-testid="header-dashboard" className="gpr-btn-secondary text-sm py-2 px-4">{user.role === 'admin' ? 'Admin' : 'Dashboard'}</Link>
-                <button onClick={async () => { await logout(); nav('/'); }} data-testid="header-logout" className="text-[var(--gpr-muted)] hover:text-[var(--gpr-text)] p-2"><LogOut className="w-4 h-4"/></button>
+                <Link to={user.role === 'admin' ? '/admin' : '/dashboard'} data-testid="header-dashboard" className="text-sm font-medium text-[var(--gpr-primary)] hover:opacity-70">{user.role === 'admin' ? 'Admin' : 'Dashboard'}</Link>
+                <button onClick={async () => { await logout(); nav('/'); }} data-testid="header-logout" className="text-[var(--gpr-muted)] hover:text-[var(--gpr-text)]" aria-label="Sign out"><LogOut className="w-4 h-4"/></button>
               </>
             ) : (
-              <Link to="/login" data-testid="header-login" className="gpr-btn-secondary text-sm py-2 px-4">Sign in</Link>
+              <Link to="/login" data-testid="header-login" className="text-sm font-medium text-[var(--gpr-primary)] hover:opacity-70">Sign in</Link>
             )}
           </div>
           <button className="md:hidden p-2" onClick={() => setOpen(!open)} data-testid="mobile-menu-toggle" aria-label="Menu">
@@ -59,15 +62,15 @@ export default function Layout({ children }) {
               {navItems.map(n => (
                 <Link key={n.to} to={n.to} onClick={() => setOpen(false)} className="py-2 text-sm font-medium text-[var(--gpr-text)]">{n.label}</Link>
               ))}
-              <div className="border-t border-[var(--gpr-border)] pt-2 mt-2 flex flex-col gap-2">
-                <Link to="/report-lost" onClick={() => setOpen(false)} className="gpr-btn-alert text-center text-sm">Report Lost Pet</Link>
+              <div className="border-t border-[var(--gpr-border)] pt-3 mt-2 flex flex-col gap-3">
+                <Link to="/report-lost" onClick={() => setOpen(false)} className="text-sm font-semibold text-[var(--gpr-alert)] flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[var(--gpr-alert)]"/> Report a lost pet</Link>
                 {user ? (
                   <>
-                    <Link to={user.role === 'admin' ? '/admin' : '/dashboard'} onClick={() => setOpen(false)} className="gpr-btn-secondary text-center text-sm">{user.role === 'admin' ? 'Admin' : 'Dashboard'}</Link>
-                    <button onClick={async () => { await logout(); setOpen(false); nav('/'); }} className="gpr-btn-secondary text-sm">Sign out</button>
+                    <Link to={user.role === 'admin' ? '/admin' : '/dashboard'} onClick={() => setOpen(false)} className="text-sm font-medium text-[var(--gpr-primary)]">{user.role === 'admin' ? 'Admin' : 'Dashboard'}</Link>
+                    <button onClick={async () => { await logout(); setOpen(false); nav('/'); }} className="text-sm text-left text-[var(--gpr-muted)]">Sign out</button>
                   </>
                 ) : (
-                  <Link to="/login" onClick={() => setOpen(false)} className="gpr-btn-secondary text-center text-sm">Sign in</Link>
+                  <Link to="/login" onClick={() => setOpen(false)} className="text-sm font-medium text-[var(--gpr-primary)]">Sign in</Link>
                 )}
               </div>
             </div>

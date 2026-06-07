@@ -69,15 +69,24 @@ h1, h2, h3, h4, h5, h6, .font-display {
   .gpr-card { @apply bg-white rounded-lg; }
   .gpr-card-bordered { @apply bg-white border border-[var(--gpr-border)] rounded-lg; }
   .gpr-rule { @apply border-t border-[var(--gpr-border)]; }
-  .gpr-btn-primary { background: var(--gpr-primary); color:#fff; @apply rounded-md px-5 py-2.5 font-medium transition-colors; }
+
+  /* Buttons — editorial, not pill-spammy SaaS */
+  .gpr-btn-primary { background: var(--gpr-primary); color:#fff; @apply inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold tracking-wide rounded-sm transition-colors; }
   .gpr-btn-primary:hover { background: var(--gpr-primary-hover); }
-  .gpr-btn-alert { background: var(--gpr-alert); color:#fff; @apply rounded-md px-5 py-2.5 font-medium transition-colors; }
+  .gpr-btn-alert { background: var(--gpr-alert); color:#fff; @apply inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold tracking-wide rounded-sm transition-colors; }
   .gpr-btn-alert:hover { background: var(--gpr-alert-hover); }
-  .gpr-btn-secondary { @apply bg-white border border-[var(--gpr-border)] rounded-md px-5 py-2.5 font-medium text-[var(--gpr-primary)]; }
-  .gpr-btn-secondary:hover { background: var(--gpr-bg); }
-  .gpr-input { @apply w-full bg-white border border-[var(--gpr-border)] rounded-md px-4 py-2.5 text-base outline-none transition; }
-  .gpr-input:focus { box-shadow: 0 0 0 3px rgba(140,179,161,0.25); border-color: var(--gpr-ring); }
-  .gpr-label { @apply block text-sm font-medium text-[var(--gpr-text)] mb-1.5; }
+  .gpr-btn-secondary { @apply inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold tracking-wide rounded-sm border border-[var(--gpr-border)] text-[var(--gpr-primary)] bg-transparent transition-colors; }
+  .gpr-btn-secondary:hover { border-color: var(--gpr-primary); }
+
+  /* Inline link-style CTA (preferred over buttons most places) */
+  .gpr-link { @apply inline-flex items-center gap-1.5 font-semibold text-[var(--gpr-primary)] pb-0.5 transition-colors; border-bottom: 1px solid rgba(30, 63, 50, 0.3); }
+  .gpr-link:hover { border-bottom-color: var(--gpr-primary); }
+  .gpr-link-alert { @apply inline-flex items-center gap-1.5 font-semibold text-[var(--gpr-alert)] pb-0.5 transition-colors; border-bottom: 1px solid rgba(200, 90, 64, 0.4); }
+  .gpr-link-alert:hover { border-bottom-color: var(--gpr-alert); }
+
+  .gpr-input { @apply w-full bg-transparent border-0 border-b border-[var(--gpr-border)] px-0 py-3 text-base outline-none transition; }
+  .gpr-input:focus { border-color: var(--gpr-primary); }
+  .gpr-label { @apply block text-[11px] tracking-[0.2em] uppercase font-semibold text-[var(--gpr-muted)] mb-2; }
   .gpr-badge-lost { background:#FDF2F0; color:var(--gpr-alert); border:1px solid #FADCD5; @apply rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide; }
   .gpr-badge-found { background:#F0F5F2; color:var(--gpr-success); border:1px solid #D5E6DD; @apply rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide; }
   .gpr-badge-registered { background:#F3F4F6; color:#4B5563; border:1px solid #E5E7EB; @apply rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide; }

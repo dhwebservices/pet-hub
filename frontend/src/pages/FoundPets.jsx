@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../lib/api";
-import { MapPin, Calendar } from "lucide-react";
+import { MapPin, Calendar, ArrowUpRight } from "lucide-react";
 
 export default function FoundPets() {
   const [items, setItems] = useState([]);
@@ -14,7 +14,7 @@ export default function FoundPets() {
           <h1 className="font-display font-extrabold text-3xl text-[var(--gpr-primary)] mt-1">Found pets awaiting owners</h1>
           <p className="text-[var(--gpr-muted)] mt-2 max-w-xl">Public reports from finders, vets and rescues. If you recognise one, contact us through the report.</p>
         </div>
-        <Link to="/report-found" className="gpr-btn-primary">Report a found pet</Link>
+        <Link to="/report-found" className="gpr-link">Report a found pet <ArrowUpRight className="w-4 h-4"/></Link>
       </div>
       <div className="mt-10">
         {items.length === 0 ? (
