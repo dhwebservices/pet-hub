@@ -1,16 +1,30 @@
 import React from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../lib/auth";
-import { Menu, X, PawPrint, ShieldCheck, MapPin, Search, User, LogOut } from "lucide-react";
+import { Menu, X, PawPrint } from "lucide-react";
 
 const navItems = [
-  { to: "/lost-pets", label: "Lost Pets" },
-  { to: "/found-pets", label: "Found Pets" },
+  { to: "/lost-pets", label: "Lost pets" },
+  { to: "/found-pets", label: "Found pets" },
   { to: "/search", label: "Search" },
   { to: "/map", label: "Map" },
   { to: "/about", label: "About" },
-  { to: "/support", label: "Support" },
+  { to: "/support", label: "Contact" },
 ];
+
+function Brandmark() {
+  return (
+    <Link to="/" data-testid="brand-link" className="flex items-center gap-3 group">
+      <span aria-hidden="true" className="inline-flex items-center justify-center w-11 h-11 rounded-2xl bg-[var(--npw-primary)] text-white shadow-sm">
+        <PawPrint className="w-6 h-6" strokeWidth={2.4}/>
+      </span>
+      <span className="leading-tight">
+        <span className="block font-bold text-[19px] text-[var(--npw-text)] tracking-tight">National Pet Watch</span>
+        <span className="block text-[12px] text-[var(--npw-muted)] -mt-0.5">UK lost &amp; found pet service</span>
+      </span>
+    </Link>
+  );
+}
 
 export default function Layout({ children }) {
   const { user, logout } = useAuth();
@@ -19,104 +33,108 @@ export default function Layout({ children }) {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-[var(--gpr-border)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <Link to="/" data-testid="brand-link" className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-md bg-[var(--gpr-primary)] flex items-center justify-center">
-              <PawPrint className="w-5 h-5 text-white" />
-            </div>
-            <div className="leading-tight">
-              <div className="font-display font-extrabold text-[15px] text-[var(--gpr-primary)]">Global Pet Registry</div>
-              <div className="text-[10px] uppercase tracking-widest text-[var(--gpr-muted)]">Recovery Network</div>
-            </div>
-          </Link>
-          <nav className="hidden md:flex items-center gap-8">
-            {navItems.map(n => (
-              <NavLink key={n.to} to={n.to} data-testid={`nav-${n.label.toLowerCase().replace(/\s/g,'-')}`}
-                className={({isActive}) => `relative py-2 text-sm font-medium transition-colors ${isActive ? 'text-[var(--gpr-primary)]' : 'text-[var(--gpr-muted)] hover:text-[var(--gpr-text)]'} ${isActive ? 'after:content-[""] after:absolute after:left-0 after:right-0 after:-bottom-px after:h-px after:bg-[var(--gpr-primary)]' : ''}`}>
-                {n.label}
-              </NavLink>
-            ))}
-          </nav>
-          <div className="hidden md:flex items-center gap-6">
-            <Link to="/report-lost" data-testid="header-report-lost" className="text-sm font-semibold text-[var(--gpr-alert)] hover:text-[var(--gpr-alert-hover)] inline-flex items-center gap-1.5">
-              <span className="relative flex w-1.5 h-1.5"><span className="animate-ping absolute inline-flex w-full h-full rounded-full bg-[var(--gpr-alert)] opacity-70"/><span className="relative inline-flex w-1.5 h-1.5 rounded-full bg-[var(--gpr-alert)]"/></span>
-              Report a lost pet
-            </Link>
-            {user ? (
-              <>
-                <Link to={user.role === 'admin' ? '/admin' : '/dashboard'} data-testid="header-dashboard" className="text-sm font-medium text-[var(--gpr-primary)] hover:opacity-70">{user.role === 'admin' ? 'Admin' : 'Dashboard'}</Link>
-                <button onClick={async () => { await logout(); nav('/'); }} data-testid="header-logout" className="text-[var(--gpr-muted)] hover:text-[var(--gpr-text)]" aria-label="Sign out"><LogOut className="w-4 h-4"/></button>
-              </>
-            ) : (
-              <Link to="/login" data-testid="header-login" className="text-sm font-medium text-[var(--gpr-primary)] hover:opacity-70">Sign in</Link>
-            )}
-          </div>
-          <button className="md:hidden p-2" onClick={() => setOpen(!open)} data-testid="mobile-menu-toggle" aria-label="Menu">
-            {open ? <X className="w-5 h-5"/> : <Menu className="w-5 h-5"/>}
-          </button>
-        </div>
-        {open && (
-          <div className="md:hidden border-t border-[var(--gpr-border)] bg-white">
-            <div className="px-4 py-3 flex flex-col gap-1">
+      <header className="bg-white border-b border-[var(--npw-border)] sticky top-0 z-40 backdrop-blur">
+        <div className="max-w-[1240px] mx-auto px-4 lg:px-6">
+          <div className="py-4 flex items-center justify-between gap-6">
+            <Brandmark/>
+            <nav aria-label="Service navigation" className="hidden lg:flex items-center gap-1">
               {navItems.map(n => (
-                <Link key={n.to} to={n.to} onClick={() => setOpen(false)} className="py-2 text-sm font-medium text-[var(--gpr-text)]">{n.label}</Link>
+                <NavLink key={n.to} to={n.to} data-testid={`nav-${n.label.toLowerCase().replace(/\s/g,'-')}`}
+                  className={({isActive}) => `px-3.5 py-2 text-[15px] font-semibold rounded-full transition ${isActive ? 'bg-[var(--npw-canvas)] text-[var(--npw-text)]' : 'text-[var(--npw-muted)] hover:text-[var(--npw-text)] hover:bg-[var(--npw-canvas)]/70'}`}>
+                  {n.label}
+                </NavLink>
               ))}
-              <div className="border-t border-[var(--gpr-border)] pt-3 mt-2 flex flex-col gap-3">
-                <Link to="/report-lost" onClick={() => setOpen(false)} className="text-sm font-semibold text-[var(--gpr-alert)] flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[var(--gpr-alert)]"/> Report a lost pet</Link>
-                {user ? (
-                  <>
-                    <Link to={user.role === 'admin' ? '/admin' : '/dashboard'} onClick={() => setOpen(false)} className="text-sm font-medium text-[var(--gpr-primary)]">{user.role === 'admin' ? 'Admin' : 'Dashboard'}</Link>
-                    <button onClick={async () => { await logout(); setOpen(false); nav('/'); }} className="text-sm text-left text-[var(--gpr-muted)]">Sign out</button>
-                  </>
-                ) : (
-                  <Link to="/login" onClick={() => setOpen(false)} className="text-sm font-medium text-[var(--gpr-primary)]">Sign in</Link>
-                )}
-              </div>
+            </nav>
+            <div className="hidden lg:flex items-center gap-3">
+              {user ? (
+                <>
+                  <Link to={user.role==='admin'?'/admin':'/dashboard'} data-testid="header-dashboard" className="text-[15px] font-semibold text-[var(--npw-text)] hover:opacity-80">{user.role==='admin'?'Admin':'My dashboard'}</Link>
+                  <button onClick={async()=>{await logout(); nav('/');}} data-testid="header-logout" className="text-[14px] text-[var(--npw-muted)] hover:text-[var(--npw-text)]">Sign out</button>
+                </>
+              ) : (
+                <>
+                  <Link to="/login" data-testid="header-login" className="text-[15px] font-semibold text-[var(--npw-text)] hover:opacity-80">Sign in</Link>
+                  <Link to="/report-lost" data-testid="header-report-lost" className="npw-btn-action !py-2 !px-5 text-[14px]">
+                    <span className="relative flex w-1.5 h-1.5"><span className="absolute inset-0 rounded-full bg-white/60 animate-ping"/><span className="relative w-1.5 h-1.5 rounded-full bg-white"/></span>
+                    Report a lost pet
+                  </Link>
+                </>
+              )}
             </div>
+            <button className="lg:hidden p-2 rounded-full hover:bg-[var(--npw-canvas)]" onClick={()=>setOpen(!open)} data-testid="mobile-menu-toggle" aria-label="Menu">
+              {open ? <X className="w-5 h-5"/> : <Menu className="w-5 h-5"/>}
+            </button>
           </div>
-        )}
+          {open && (
+            <nav className="lg:hidden pb-4 flex flex-col gap-1">
+              {navItems.map(n => (
+                <Link key={n.to} to={n.to} onClick={()=>setOpen(false)} className="px-3 py-2.5 rounded-xl text-[15px] font-semibold text-[var(--npw-text)] hover:bg-[var(--npw-canvas)]">{n.label}</Link>
+              ))}
+              <div className="border-t border-[var(--npw-border)] my-2"/>
+              {user ? (
+                <>
+                  <Link to={user.role==='admin'?'/admin':'/dashboard'} onClick={()=>setOpen(false)} className="px-3 py-2.5 rounded-xl text-[15px] font-semibold text-[var(--npw-text)]">{user.role==='admin'?'Admin':'My dashboard'}</Link>
+                  <button onClick={async()=>{await logout(); setOpen(false); nav('/');}} className="px-3 py-2.5 rounded-xl text-left text-[15px] text-[var(--npw-muted)]">Sign out</button>
+                </>
+              ) : (
+                <>
+                  <Link to="/login" onClick={()=>setOpen(false)} className="px-3 py-2.5 rounded-xl text-[15px] font-semibold text-[var(--npw-text)]">Sign in</Link>
+                  <Link to="/report-lost" onClick={()=>setOpen(false)} className="npw-btn-action justify-center mt-2">Report a lost pet</Link>
+                </>
+              )}
+            </nav>
+          )}
+        </div>
       </header>
+
+      {/* Beta service notice — small cream pill */}
+      <div className="max-w-[1240px] mx-auto px-4 lg:px-6 pt-5">
+        <div className="npw-phase inline-flex">
+          <span className="npw-tag-beta">Beta</span>
+          <span>A new community service. <Link to="/support" className="npw-link">Tell us how to improve it</Link>.</span>
+        </div>
+      </div>
 
       <main className="flex-1">{children}</main>
 
-      <footer className="border-t border-[var(--gpr-border)] mt-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <footer className="mt-20 bg-[var(--npw-canvas)] border-t border-[var(--npw-border)]">
+        <div className="max-w-[1240px] mx-auto px-4 lg:px-6 py-14">
           <div className="grid md:grid-cols-12 gap-10">
-            <div className="md:col-span-5">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 rounded-md bg-[var(--gpr-primary)] flex items-center justify-center"><PawPrint className="w-4 h-4 text-white"/></div>
-                <span className="font-display font-extrabold text-[var(--gpr-primary)]">Global Pet Registry</span>
-              </div>
-              <p className="text-sm text-[var(--gpr-muted)] max-w-sm leading-relaxed">The modern pet registry &amp; recovery network. Trusted by owners, veterinarians and rescues to reunite missing pets faster.</p>
+            <div className="md:col-span-4">
+              <Brandmark/>
+              <p className="text-[15px] text-[var(--npw-muted)] leading-relaxed max-w-sm mt-5">A community-run UK service that helps reunite families with lost pets through verified local alerts. Free to use.</p>
             </div>
-            <div className="md:col-span-7 grid grid-cols-3 gap-8 text-sm">
-              <ul className="space-y-2.5">
-                <li className="gpr-eyebrow mb-1">Platform</li>
-                <li><Link to="/register-pet" className="text-[var(--gpr-text)] hover:text-[var(--gpr-primary)]">Register a pet</Link></li>
-                <li><Link to="/lost-pets" className="text-[var(--gpr-text)] hover:text-[var(--gpr-primary)]">Lost pets</Link></li>
-                <li><Link to="/found-pets" className="text-[var(--gpr-text)] hover:text-[var(--gpr-primary)]">Found pets</Link></li>
-                <li><Link to="/map" className="text-[var(--gpr-text)] hover:text-[var(--gpr-primary)]">Recovery map</Link></li>
+            <nav aria-label="Service" className="md:col-span-3">
+              <h3 className="text-[15px] font-bold mb-4">Use the service</h3>
+              <ul className="space-y-2.5 text-[15px]">
+                <li><Link className="text-[var(--npw-text)] hover:text-[var(--npw-primary)] underline decoration-1 underline-offset-4" to="/report-lost">Report a lost pet</Link></li>
+                <li><Link className="text-[var(--npw-text)] hover:text-[var(--npw-primary)] underline decoration-1 underline-offset-4" to="/report-found">Report a found pet</Link></li>
+                <li><Link className="text-[var(--npw-text)] hover:text-[var(--npw-primary)] underline decoration-1 underline-offset-4" to="/register-pet">Register a pet</Link></li>
+                <li><Link className="text-[var(--npw-text)] hover:text-[var(--npw-primary)] underline decoration-1 underline-offset-4" to="/map">Lost &amp; found map</Link></li>
               </ul>
-              <ul className="space-y-2.5">
-                <li className="gpr-eyebrow mb-1">For professionals</li>
-                <li><Link to="/vet-register" className="text-[var(--gpr-text)] hover:text-[var(--gpr-primary)]">Veterinary practices</Link></li>
-                <li><Link to="/rescue-register" className="text-[var(--gpr-text)] hover:text-[var(--gpr-primary)]">Rescue organisations</Link></li>
-                <li><Link to="/subscribe" className="text-[var(--gpr-text)] hover:text-[var(--gpr-primary)]">Premium</Link></li>
-                <li><Link to="/donate" className="text-[var(--gpr-text)] hover:text-[var(--gpr-primary)]">Donate</Link></li>
+            </nav>
+            <nav aria-label="Get involved" className="md:col-span-3">
+              <h3 className="text-[15px] font-bold mb-4">Get involved</h3>
+              <ul className="space-y-2.5 text-[15px]">
+                <li><Link className="text-[var(--npw-text)] hover:text-[var(--npw-primary)] underline decoration-1 underline-offset-4" to="/vet-register">For veterinary practices</Link></li>
+                <li><Link className="text-[var(--npw-text)] hover:text-[var(--npw-primary)] underline decoration-1 underline-offset-4" to="/rescue-register">For rescue organisations</Link></li>
+                <li><Link className="text-[var(--npw-text)] hover:text-[var(--npw-primary)] underline decoration-1 underline-offset-4" to="/donate">Donate</Link></li>
+                <li><Link className="text-[var(--npw-text)] hover:text-[var(--npw-primary)] underline decoration-1 underline-offset-4" to="/subscribe">Become a supporter</Link></li>
               </ul>
-              <ul className="space-y-2.5">
-                <li className="gpr-eyebrow mb-1">Company</li>
-                <li><Link to="/about" className="text-[var(--gpr-text)] hover:text-[var(--gpr-primary)]">About</Link></li>
-                <li><Link to="/support" className="text-[var(--gpr-text)] hover:text-[var(--gpr-primary)]">Support</Link></li>
-                <li><Link to="/privacy" className="text-[var(--gpr-text)] hover:text-[var(--gpr-primary)]">Privacy</Link></li>
-                <li><Link to="/terms" className="text-[var(--gpr-text)] hover:text-[var(--gpr-primary)]">Terms</Link></li>
+            </nav>
+            <nav aria-label="About" className="md:col-span-2">
+              <h3 className="text-[15px] font-bold mb-4">About</h3>
+              <ul className="space-y-2.5 text-[15px]">
+                <li><Link className="text-[var(--npw-text)] hover:text-[var(--npw-primary)] underline decoration-1 underline-offset-4" to="/about">About us</Link></li>
+                <li><Link className="text-[var(--npw-text)] hover:text-[var(--npw-primary)] underline decoration-1 underline-offset-4" to="/support">Contact</Link></li>
+                <li><Link className="text-[var(--npw-text)] hover:text-[var(--npw-primary)] underline decoration-1 underline-offset-4" to="/privacy">Privacy</Link></li>
+                <li><Link className="text-[var(--npw-text)] hover:text-[var(--npw-primary)] underline decoration-1 underline-offset-4" to="/terms">Terms</Link></li>
               </ul>
-            </div>
+            </nav>
           </div>
-          <div className="border-t border-[var(--gpr-border)] mt-12 pt-6 text-xs text-[var(--gpr-muted)] flex flex-wrap justify-between gap-2">
-            <span>© {new Date().getFullYear()} Global Pet Registry. All rights reserved.</span>
-            <span>The Modern Pet Registry &amp; Recovery Network</span>
+          <div className="mt-10 pt-6 border-t border-[var(--npw-border)] flex flex-wrap items-center justify-between gap-3 text-[13px] text-[var(--npw-muted)]">
+            <span>© {new Date().getFullYear()} National Pet Watch · A community service, not a government body</span>
+            <span>Accessibility · Free to use</span>
           </div>
         </div>
       </footer>

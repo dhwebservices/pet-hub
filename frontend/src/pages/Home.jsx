@@ -1,170 +1,182 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../lib/api";
+import { ArrowRight, ShieldCheck, MapPin, Bell, QrCode, Stethoscope, Heart } from "lucide-react";
 
-const HERO = "https://images.unsplash.com/photo-1557495235-340eb888a9fb?crop=entropy&cs=srgb&fm=jpg&w=2000&q=85";
-const STORY_IMG = "https://images.pexels.com/photos/3726679/pexels-photo-3726679.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=1200";
-const VET_IMG = "https://images.pexels.com/photos/6816859/pexels-photo-6816859.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=1200";
+const HERO_DOG = "https://images.unsplash.com/photo-1543466835-00a7907e9de1?crop=entropy&cs=srgb&fm=jpg&w=1400&q=85";
+const HERO_CAT = "https://images.unsplash.com/photo-1574158622682-e40e69881006?crop=entropy&cs=srgb&fm=jpg&w=900&q=85";
 
 export default function Home() {
-  const [count, setCount] = useState(null);
-  useEffect(() => { api.get("/lost").then(r => setCount(r.data.length)).catch(() => setCount(0)); }, []);
+  const [stats, setStats] = useState({ lost: null, found: null });
+  useEffect(() => {
+    Promise.all([api.get("/lost").catch(()=>({data:[]})), api.get("/found").catch(()=>({data:[]}))])
+      .then(([l,f]) => setStats({ lost: l.data.length, found: f.data.length }));
+  }, []);
 
   return (
     <div data-testid="home-page">
 
-      {/* HERO — cinematic, serif italic accent inside sans headline */}
-      <section className="relative">
-        <div className="relative h-[78vh] min-h-[620px] overflow-hidden">
-          <img src={HERO} alt="" className="absolute inset-0 w-full h-full object-cover"/>
-          <div className="absolute inset-0 bg-gradient-to-tr from-[#0e1f19]/85 via-[#0e1f19]/45 to-transparent"/>
-          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex flex-col justify-end pb-20 md:pb-28 text-white">
-            <div className="text-[11px] tracking-[0.32em] uppercase font-medium text-white/70 mb-10 flex items-center gap-4">
-              <span className="w-12 h-px bg-white/40"/>
-              <span>Issue №&nbsp;01 &middot; Established 2026 &middot; United Kingdom</span>
-            </div>
-            <h1 className="font-display font-extrabold tracking-tight text-5xl md:text-[88px] leading-[0.92] max-w-5xl">
-              The modern pet registry <em className="accent text-white/95">&amp;</em> recovery network.
+      {/* HERO */}
+      <section className="max-w-[1240px] mx-auto px-4 lg:px-6 pt-10 md:pt-16 pb-16">
+        <div className="grid md:grid-cols-12 gap-10 items-center">
+          <div className="md:col-span-6">
+            <div className="npw-eyebrow mb-5">A UK community service</div>
+            <h1 className="text-[44px] md:text-[60px] leading-[1.04] tracking-tight font-extrabold">
+              Reuniting families with their <span className="text-[var(--npw-accent)]">lost pets</span>.
             </h1>
-            <div className="mt-12 flex flex-wrap items-end justify-between gap-x-12 gap-y-6">
-              <p className="font-serif italic text-white/90 text-xl md:text-2xl max-w-xl leading-[1.45]">
-                A search party already waiting, the day you ever need one.
-              </p>
-              <div className="flex items-center gap-x-10 text-sm font-semibold">
-                <Link to="/register" data-testid="hero-register-cta" className="inline-flex items-center gap-2 text-white border-b border-white pb-1 hover:opacity-80">Register your pet →</Link>
-                <Link to="/report-lost" data-testid="hero-report-lost-cta" className="inline-flex items-center gap-2 text-white/85 border-b border-white/35 pb-1 hover:text-white hover:border-white">Report a lost pet</Link>
+            <p className="mt-6 text-[18px] md:text-[20px] text-[var(--npw-muted)] leading-relaxed max-w-xl">
+              A free service that helps owners, neighbours, veterinary practices and rescues work together when a pet goes missing.
+            </p>
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              <Link to="/register" data-testid="hero-register-cta" className="npw-btn-primary">Register your pet <ArrowRight className="w-4 h-4"/></Link>
+              <Link to="/report-lost" data-testid="hero-report-lost-cta" className="npw-btn-action">Report a lost pet</Link>
+            </div>
+            <p className="mt-5 text-[14px] text-[var(--npw-muted)]">If your pet has been stolen, please also contact the police on 101.</p>
+            <div className="mt-8 flex items-center gap-6 text-[14px] text-[var(--npw-muted)]">
+              <span className="flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-[var(--npw-success)]"/> Verified records</span>
+              <span className="flex items-center gap-2"><MapPin className="w-4 h-4 text-[var(--npw-primary)]"/> 10-mile alerts</span>
+              <span className="flex items-center gap-2"><Heart className="w-4 h-4 text-[var(--npw-accent)]"/> Donor-funded</span>
+            </div>
+          </div>
+
+          {/* Hero collage */}
+          <div className="md:col-span-6 relative">
+            <div className="relative grid grid-cols-5 grid-rows-6 gap-3 h-[440px] md:h-[520px]">
+              <img src={HERO_DOG} alt="" className="col-span-3 row-span-6 rounded-3xl object-cover w-full h-full"/>
+              <img src={HERO_CAT} alt="" className="col-span-2 row-span-3 col-start-4 rounded-3xl object-cover w-full h-full"/>
+              <div className="col-span-2 row-span-3 col-start-4 row-start-4 rounded-3xl bg-[var(--npw-canvas)] p-5 flex flex-col justify-between">
+                <div className="flex items-center gap-2"><span className="relative flex w-2.5 h-2.5"><span className="absolute inset-0 rounded-full bg-[var(--npw-accent)] animate-ping opacity-70"/><span className="relative w-2.5 h-2.5 rounded-full bg-[var(--npw-accent)]"/></span><span className="text-[12px] font-bold text-[var(--npw-accent)] uppercase tracking-wider">Live</span></div>
+                <div>
+                  <div className="text-[36px] font-extrabold leading-none">{stats.lost ?? "—"}</div>
+                  <div className="text-[13px] text-[var(--npw-muted)] mt-1">active lost reports across the UK</div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* OPENING PARAGRAPH — drop cap, serif accent words */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 md:pt-40 pb-20 md:pb-28">
-        <div className="grid md:grid-cols-12 gap-x-16 gap-y-10">
-          <div className="md:col-span-7 md:col-start-2">
-            <p className="dropcap text-[20px] md:text-[22px] leading-[1.65] text-[var(--gpr-text)]">
-              <span>Most pets are recovered by neighbours, not by databases.</span> A microchip only matters when a stranger finds your pet, takes it to a vet, scans the chip, and a clerk calls the right phone number on file. By then — <em className="accent text-[var(--gpr-primary)]">sometimes days have passed</em>. Global Pet Registry adds the layer that's missing: a real-time, postcode-based alert network that puts a photograph in front of the right person, on the right street, in the right minute.
-            </p>
-            <p className="mt-10 text-[15px] text-[var(--gpr-muted)] tracking-wide">
-              {count === null ? "—" : count} active alert{count === 1 ? "" : "s"}
-              <span className="mx-3 text-[var(--gpr-border)]">/</span>
-              dispatch in under five minutes
-              <span className="mx-3 text-[var(--gpr-border)]">/</span>
-              free for owners
-            </p>
-          </div>
-          <aside className="md:col-span-3 md:col-start-10 md:pt-3">
-            <div className="text-[11px] tracking-[0.25em] uppercase font-semibold text-[var(--gpr-muted)] mb-3">Marginalia</div>
-            <p className="font-serif italic text-[15px] text-[var(--gpr-muted)] leading-[1.6]">
-              "The first hour is worth the next twenty-four. A photograph travelling at the speed of email beats a microchip travelling at the speed of foot."
-            </p>
-            <p className="text-[11px] uppercase tracking-[0.18em] text-[var(--gpr-muted)] mt-4">— Field note, recovery volunteer</p>
-          </aside>
-        </div>
-      </section>
-
-      {/* PHOTOGRAPH — full bleed wide image with hanging italic caption */}
-      <section>
-        <figure>
-          <div className="relative h-[58vh] min-h-[420px] overflow-hidden">
-            <img src={STORY_IMG} alt="" className="absolute inset-0 w-full h-full object-cover"/>
-          </div>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
-            <figcaption className="font-serif italic text-[15px] text-[var(--gpr-muted)] max-w-2xl">
-              <span className="not-italic font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--gpr-muted)] mr-2 align-middle">Fig. 01</span>
-              A lost dog reunited within ninety minutes of her owner filing a report. The kind of outcome the network is built to make ordinary.
-            </figcaption>
-          </div>
-        </figure>
-      </section>
-
-      {/* PULL QUOTE — massive serif, no card */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 md:py-44">
-        <div className="md:max-w-5xl">
-          <span className="font-serif text-[var(--gpr-alert)] text-[180px] md:text-[260px] leading-[0.7] block font-medium" aria-hidden="true">&ldquo;</span>
-          <blockquote className="font-serif italic text-[var(--gpr-primary)] text-3xl md:text-[52px] leading-[1.15] -mt-12 md:-mt-20 hang-quote">
-            Recovery is a community event, not a database query. The faster you can put a photograph in front of the right person on the right street, the better the outcome.
-          </blockquote>
-          <footer className="mt-10 flex items-baseline gap-x-4 text-sm">
-            <span className="font-display font-bold text-[var(--gpr-primary)] tracking-tight">Dr. Helen Maris</span>
-            <span className="font-serif italic text-[var(--gpr-muted)]">Veterinary surgeon, MRCVS</span>
-          </footer>
-        </div>
-      </section>
-
-      {/* PROFESSIONALS — image hangs off the side, copy with serif italic accent */}
-      <section className="overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32">
-          <div className="grid md:grid-cols-12 gap-x-16 gap-y-10 items-end">
-            <figure className="md:col-span-6">
-              <img src={VET_IMG} alt="" className="w-full h-[520px] md:h-[640px] object-cover"/>
-              <figcaption className="font-serif italic text-[13px] text-[var(--gpr-muted)] mt-3"><span className="not-italic font-mono text-[10px] uppercase tracking-[0.2em] mr-2 align-middle">Fig. 02</span>Verified practices and rescues are the network's quiet backbone.</figcaption>
-            </figure>
-            <div className="md:col-span-5 md:col-start-8 md:pb-16">
-              <h2 className="font-display font-extrabold text-4xl md:text-[56px] text-[var(--gpr-primary)] leading-[1.02]">
-                Built with the <em className="accent text-[var(--gpr-alert)]">people</em> who already do the work.
-              </h2>
-              <p className="font-serif italic text-[var(--gpr-muted)] text-lg leading-[1.6] mt-8 max-w-md">
-                Verified veterinary practices and rescue organisations submit found reports, scan microchip records and confirm reunifications directly through their portal. Every action is timestamped and audit-logged.
-              </p>
-              <div className="mt-10 flex flex-wrap gap-x-10 gap-y-3 text-sm">
-                <Link to="/vet-register" className="gpr-link">Veterinary registration →</Link>
-                <Link to="/rescue-register" className="gpr-link">Rescue registration →</Link>
-              </div>
+      {/* HOW IT WORKS — 4 friendly icon steps */}
+      <section className="bg-[var(--npw-canvas)] border-y border-[var(--npw-border)]">
+        <div className="max-w-[1240px] mx-auto px-4 lg:px-6 py-16 md:py-20">
+          <div className="grid md:grid-cols-12 gap-6 items-end mb-12">
+            <div className="md:col-span-7">
+              <div className="npw-eyebrow mb-3">How the service works</div>
+              <h2 className="text-[32px] md:text-[42px] leading-tight font-extrabold">A search party already waiting, the day you ever need one.</h2>
             </div>
+            <p className="md:col-span-5 text-[17px] text-[var(--npw-muted)] leading-relaxed">It takes two minutes to register. If your pet ever goes missing, we put their photograph in front of every member nearby — within minutes.</p>
           </div>
-        </div>
-      </section>
-
-      {/* MEMBERSHIP — set as a magazine "subscribe to" advert, dark green ink on cream */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 md:py-40">
-        <div className="grid md:grid-cols-12 gap-x-16 gap-y-12">
-          <div className="md:col-span-7">
-            <div className="text-[11px] tracking-[0.32em] uppercase font-semibold text-[var(--gpr-muted)]">Membership</div>
-            <p className="font-serif italic text-[var(--gpr-muted)] text-lg mt-3">If you'd like to support the network</p>
-            <div className="mt-10 flex items-start gap-6 leading-none">
-              <span className="font-serif text-[var(--gpr-primary)] font-medium text-[28px] md:text-4xl mt-4">£</span>
-              <span className="font-display font-extrabold text-[var(--gpr-primary)] text-[140px] md:text-[220px] leading-[0.82] tracking-tight">2.99</span>
-              <span className="font-serif italic text-[var(--gpr-muted)] mt-6 text-xl md:text-2xl">/ a month</span>
-            </div>
-            <p className="text-[var(--gpr-text)] text-[17px] leading-[1.7] mt-12 max-w-xl">
-              Family account access, a medical record vault, priority alerts within twenty-five miles and extended document storage. Your subscription keeps the alert network free for owners who can't afford to pay.
-            </p>
-            <div className="mt-12 flex flex-wrap items-center gap-x-10 gap-y-3 text-sm">
-              <Link to="/subscribe" data-testid="cta-subscribe" className="gpr-link">Subscribe →</Link>
-              <Link to="/donate" data-testid="cta-donate" className="gpr-link-alert">Donate instead</Link>
-            </div>
-          </div>
-          <ul className="md:col-span-4 md:col-start-9 md:pt-4 font-serif text-[var(--gpr-text)]">
+          <ol className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {[
-              "Multiple emergency contacts per pet",
-              "Medical record vault with documents",
-              "Family &middot; multi-user account access",
-              "Priority alerts within 25 miles",
-              "Extended document storage",
-            ].map((f, i) => (
-              <li key={i} className="flex gap-5 py-5 border-t border-[var(--gpr-border)] last:border-b last:border-b-[var(--gpr-border)]">
-                <span className="font-mono text-xs text-[var(--gpr-muted)] tracking-wider pt-1">{String(i+1).padStart(2,'0')}</span>
-                <span className="italic text-[17px] leading-snug" dangerouslySetInnerHTML={{__html: f}}/>
+              { i: QrCode, n: "01", t: "Register", b: "Add your pet's details, photograph, microchip and emergency contact." },
+              { i: Bell, n: "02", t: "If missing, report", b: "File a lost report with the last-seen postcode. Two minutes." },
+              { i: MapPin, n: "03", t: "10-mile alert", b: "Every registered member nearby is emailed with the photograph and area." },
+              { i: ShieldCheck, n: "04", t: "Reunite", b: "Sightings come back to you instantly. Mark your pet found when home." },
+            ].map((s,i)=>(
+              <li key={i} className="bg-white rounded-2xl p-6 border border-[var(--npw-border)]">
+                <div className="flex items-center justify-between mb-5">
+                  <span className="inline-flex items-center justify-center w-11 h-11 rounded-2xl bg-[var(--npw-primary-soft)] text-[var(--npw-primary)]"><s.i className="w-5 h-5"/></span>
+                  <span className="text-[12px] font-bold text-[var(--npw-muted)] tracking-wider">{s.n}</span>
+                </div>
+                <h3 className="text-[18px] font-bold">{s.t}</h3>
+                <p className="text-[15px] text-[var(--npw-muted)] leading-relaxed mt-2">{s.b}</p>
               </li>
             ))}
-          </ul>
+          </ol>
         </div>
       </section>
 
-      {/* Closing colophon */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24 md:pb-32">
-        <div className="grid md:grid-cols-12 items-end gap-y-6">
-          <div className="md:col-span-7 md:col-start-2">
-            <h3 className="font-display font-extrabold text-4xl md:text-6xl text-[var(--gpr-primary)] leading-[1.02]">
-              Two minutes today.<br/>
-              <em className="accent text-[var(--gpr-alert)]">A network ready</em> for any day after.
-            </h3>
+      {/* SERVICES — rounded card grid, friendly photos */}
+      <section className="bg-white">
+        <div className="max-w-[1240px] mx-auto px-4 lg:px-6 py-16 md:py-20">
+          <div className="flex items-end justify-between flex-wrap gap-6 mb-10">
+            <div>
+              <div className="npw-eyebrow mb-3">Services</div>
+              <h2 className="text-[32px] md:text-[40px] leading-tight font-extrabold">Everything we offer, in one place.</h2>
+            </div>
+            <p className="text-[16px] text-[var(--npw-muted)] max-w-md">All services are free at the point of use. Donations and supporter memberships keep them that way.</p>
           </div>
-          <div className="md:col-span-3 md:col-start-10 text-right">
-            <Link to="/register" className="gpr-link">Register a pet →</Link>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {[
+              { to:"/register-pet", h:"Register a pet", b:"Add your pet to the national register with photographs, microchip and emergency contact." },
+              { to:"/report-lost", h:"Report a lost pet", b:"Tell us your pet is missing. We email every registered member within 10 miles." },
+              { to:"/report-found", h:"Report a found pet", b:"Found someone's pet? Submit a report so we can help reunite them with their owner." },
+              { to:"/lost-pets", h:"View lost pets", b:"See pets currently reported missing across the UK and report sightings." },
+              { to:"/map", h:"Lost & found map", b:"Browse an interactive map of lost and found pets in your area." },
+              { to:"/search", h:"Search the register", b:"Search by name, breed or microchip number across all public records." },
+            ].map((s,i)=>(
+              <Link key={i} to={s.to} className="npw-service-card group" data-testid={`service-${i}`}>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-[20px] font-bold text-[var(--npw-text)] group-hover:text-[var(--npw-primary)]">{s.h}</h3>
+                  <ArrowRight className="w-5 h-5 text-[var(--npw-muted)] group-hover:text-[var(--npw-primary)] transition group-hover:translate-x-1"/>
+                </div>
+                <p className="mt-3 text-[15px] text-[var(--npw-muted)] leading-relaxed">{s.b}</p>
+              </Link>
+            ))}
           </div>
+        </div>
+      </section>
+
+      {/* PROFESSIONALS */}
+      <section className="bg-[var(--npw-primary)] text-white relative overflow-hidden">
+        <div className="absolute -right-32 -bottom-32 w-[420px] h-[420px] rounded-full bg-white/5 pointer-events-none"/>
+        <div className="absolute -left-24 top-10 w-[300px] h-[300px] rounded-full bg-[var(--npw-accent)]/12 pointer-events-none"/>
+        <div className="relative max-w-[1240px] mx-auto px-4 lg:px-6 py-16 md:py-24 grid md:grid-cols-12 gap-10 items-center">
+          <div className="md:col-span-7">
+            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/12 text-white/90 text-[12px] font-bold uppercase tracking-wider"><Stethoscope className="w-3.5 h-3.5"/> For professionals</span>
+            <h2 className="mt-6 text-[32px] md:text-[44px] font-extrabold leading-[1.08]">Built with the practices and rescues who already do the work.</h2>
+            <p className="mt-5 text-white/85 text-[17px] leading-relaxed max-w-xl">Verified veterinary practices and rescue organisations can submit found reports, scan microchip records and confirm reunifications directly. There is no charge for participating partners.</p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link to="/vet-register" className="npw-btn-action">Register a veterinary practice</Link>
+              <Link to="/rescue-register" className="bg-white/10 hover:bg-white/15 border border-white/25 text-white font-semibold px-6 py-3 rounded-full inline-flex items-center gap-2 transition">Register a rescue <ArrowRight className="w-4 h-4"/></Link>
+            </div>
+          </div>
+          <blockquote className="md:col-span-5 border-l-4 border-[var(--npw-accent)] pl-6 text-white/90">
+            <p className="text-[20px] leading-relaxed">"Recovery is a community event, not a database query. The faster you can put a photograph in front of the right person on the right street, the better the outcome."</p>
+            <footer className="mt-5 text-[14px] text-white/70">Dr. Helen Maris &middot; Veterinary surgeon, MRCVS</footer>
+          </blockquote>
+        </div>
+      </section>
+
+      {/* SUPPORT THE SERVICE */}
+      <section className="bg-white">
+        <div className="max-w-[1240px] mx-auto px-4 lg:px-6 py-16 md:py-20">
+          <div className="grid md:grid-cols-12 gap-8 items-start">
+            <div className="md:col-span-5">
+              <div className="npw-eyebrow mb-3">Supporting the service</div>
+              <h2 className="text-[32px] md:text-[40px] leading-tight font-extrabold">Free for owners. <br/>Funded by people who care.</h2>
+              <p className="mt-5 text-[17px] text-[var(--npw-muted)] leading-relaxed max-w-md">National Pet Watch is free for owners. Donations and supporter memberships keep the alert network running and free at the point of use.</p>
+            </div>
+            <div className="md:col-span-7 grid sm:grid-cols-2 gap-5">
+              <div className="bg-[var(--npw-canvas)] p-6 rounded-2xl">
+                <div className="npw-eyebrow">Monthly supporter</div>
+                <div className="mt-3 flex items-baseline gap-2"><span className="text-[42px] font-extrabold leading-none">£2.99</span><span className="text-[15px] text-[var(--npw-muted)]">/ month</span></div>
+                <ul className="mt-5 space-y-2 text-[15px]">
+                  <li className="flex gap-2"><span className="text-[var(--npw-success)] font-bold">✓</span> Family account access</li>
+                  <li className="flex gap-2"><span className="text-[var(--npw-success)] font-bold">✓</span> Medical record vault</li>
+                  <li className="flex gap-2"><span className="text-[var(--npw-success)] font-bold">✓</span> Priority alerts within 25 mi</li>
+                </ul>
+                <Link to="/subscribe" data-testid="cta-subscribe" className="npw-btn-primary mt-6">Become a supporter</Link>
+              </div>
+              <div className="bg-[var(--npw-accent-soft)] p-6 rounded-2xl">
+                <div className="npw-eyebrow">One-off donation</div>
+                <div className="mt-3 flex items-baseline gap-2"><span className="text-[42px] font-extrabold leading-none text-[var(--npw-accent)]">£</span><span className="text-[42px] font-extrabold leading-none text-[var(--npw-accent)]">10</span><span className="text-[15px] text-[var(--npw-muted)]">or any amount</span></div>
+                <p className="mt-5 text-[15px] text-[var(--npw-muted)] leading-relaxed">Donations cover alert dispatches and verification of vets and rescues. Every pound stays with the service.</p>
+                <Link to="/donate" data-testid="cta-donate" className="npw-btn-action mt-6">Donate to the service</Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CLOSING CTA */}
+      <section className="max-w-[1240px] mx-auto px-4 lg:px-6 py-16 md:py-20">
+        <div className="bg-[var(--npw-canvas)] rounded-3xl p-8 md:p-14 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="max-w-xl">
+            <h2 className="text-[28px] md:text-[36px] font-extrabold leading-tight">Register your pet today, before you need to.</h2>
+            <p className="mt-3 text-[16px] text-[var(--npw-muted)]">Two minutes. No charge. Your home address stays private.</p>
+          </div>
+          <Link to="/register" className="npw-btn-primary !text-[16px]">Get started <ArrowRight className="w-4 h-4"/></Link>
         </div>
       </section>
     </div>

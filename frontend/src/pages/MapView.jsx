@@ -20,18 +20,18 @@ export default function MapView() {
     <div data-testid="map-page" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-24">
       <header className="grid md:grid-cols-12 gap-x-14 items-end mb-10">
         <div className="md:col-span-8">
-          <div className="font-mono text-[11px] uppercase tracking-[0.25em] text-[var(--gpr-muted)] mb-6">The Recovery Map · Open Street Map</div>
-          <h1 className="font-display font-extrabold text-5xl md:text-7xl text-[var(--gpr-primary)] leading-[0.98]">Where the network is <em className="accent text-[var(--gpr-alert)]">looking</em>.</h1>
-          <p className="font-serif italic text-[var(--gpr-muted)] text-lg mt-7 max-w-xl leading-[1.6]">Approximate areas only — exact home addresses are never displayed.</p>
+          <div className="text-[12px] font-bold uppercase tracking-wider text-[var(--npw-muted)] mb-6">The Recovery Map · Open Street Map</div>
+          <h1 className="font-extrabold text-5xl md:text-7xl text-[var(--npw-text)] leading-[0.98]">Where the network is <span className="text-[var(--npw-accent)]">looking</span>.</h1>
+          <p className="text-[var(--npw-muted)] text-lg mt-7 max-w-xl leading-[1.6]">Approximate areas only — exact home addresses are never displayed.</p>
         </div>
         <div className="md:col-span-3 md:col-start-10 mt-6 md:mt-0 md:text-right">
-          <div className="inline-flex flex-col gap-2 text-sm text-[var(--gpr-muted)]">
+          <div className="inline-flex flex-col gap-2 text-sm text-[var(--npw-muted)]">
             <span className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-[#C85A40]"/> Lost</span>
             <span className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-[#3B6954]"/> Found</span>
           </div>
         </div>
       </header>
-      <div className="overflow-hidden border-t border-b border-[var(--gpr-border)]" style={{height:"640px"}}>
+      <div className="overflow-hidden border-t border-b border-[var(--npw-border)]" style={{height:"640px"}}>
         <MapContainer center={center} zoom={6} style={{height:"100%",width:"100%"}}>
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; OpenStreetMap'/>
           {markers.map(m => (

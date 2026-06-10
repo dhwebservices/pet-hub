@@ -1,0 +1,52 @@
+{
+  "summary": "Comprehensive backend testing for National Pet Watch. Ran 30 pytest cases covering health, auth (register/login/me + bearer & cookie), pets CRUD + QR + public view, lost/found/sighting flows with async radius alert dispatch, search, map markers, vet/rescue registration, MOCKED Stripe subscriptions, MOCKED PayPal donations, MOCKED Resend email-log writes, support tickets, public image upload, and all admin endpoints. 30/30 passed (100%). Stripe and PayPal correctly returned {mocked:true} and flipped subscription_tier appropriately. Sighting/welcome emails appeared in db.email_log. Nominatim geocoding successfully resolved SW1A 1AA to coords and map markers returned with lat/lon. Admin RBAC enforced (owner -> 403).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/pets and POST /api/lost", "issue": "Return 200 with created resource. Per REST convention should be 201. Non-blocking."},
+      {"endpoint": "POST /api/auth/register, /api/vet/register, /api/rescue/register", "issue": "No password strength validation — accepts arbitrarily weak passwords. Recommend enforcing min length / complexity."},
+      {"endpoint": "POST /api/auth/login", "issue": "No brute-force lockout. The auth_testing playbook recommends 5-fail lockout — not implemented."},
+      {"endpoint": "POST /api/donations/create", "issue": "Accepts amount/currency as query params instead of JSON body — works but inconsistent with rest of API. Also no validation: negative amounts accepted."},
+      {"endpoint": "GET /api/lost/{id}", "issue": "Endpoint is public (no auth) and returns full lost report including owner_id and last_seen coordinates — acceptable for the public lost-pet use case but worth confirming with product."}
+    ]
+  },
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_npw_backend.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "Consider adding password strength validation on registration endpoints",
+    "Consider adding brute-force lockout on /api/auth/login (per auth_testing playbook)",
+    "Optional: change POST create endpoints to return 201 instead of 200",
+    "Optional: switch /api/donations/create to JSON body and validate amount > 0",
+    "Optional: ensure GET /api/lost/{id} doesn't leak owner_id externally (could be filtered like /pets/{id} owner_public pattern)"
+  ],
+  "critical_code_review_comments": [
+    "server.py is ~840 lines — close to the 700-line threshold. Recommend splitting into modules (auth.py, pets.py, lost.py, admin.py, payments.py, email.py) for maintainability.",
+    "@app.on_event('startup'/'shutdown') is deprecated in modern FastAPI; should migrate to lifespan context manager.",
+    "seed_admin() is idempotent and re-hashes admin password if it changed — good.",
+    "bcrypt hashes verified to start with $2b$ (default bcrypt.gensalt).",
+    "httpOnly cookies are set with samesite='lax' on register/login — good. However, secure=True is missing (browser may still accept on HTTPS but explicit flag recommended in prod).",
+    "CORS allow_origins reads from env (defaults to '*') with allow_credentials=True — '*' + credentials is invalid per spec; in production CORS_ORIGINS must be an explicit origin list. Currently '*' in .env.",
+    "verify_password swallows all exceptions and returns False — fine, but logging on unexpected errors would help debugging.",
+    "dispatch_lost_alerts iterates all users with coords (no Mongo geo-index) — O(n) per lost report. Fine for MVP but should add 2dsphere index for scale.",
+    "/api/donations/create uses query params — inconsistent with rest of JSON API.",
+    "No rate limiting anywhere — public endpoints (/found, /sightings, /upload/public-image, /support, /donations/create) are abuseable.",
+    "Public image upload (3 MB) does no content validation beyond content-type prefix — a malicious user could upload non-image bytes with image/* MIME. Consider Pillow-based decode validation.",
+    "JWT secret loaded via jwt_secret() function each call — fine, but token type check is good. Refresh token endpoint missing (refresh_token cookie is set but never validated/exchanged).",
+    "Pet QR code uses os.environ.get('FRONTEND_URL', 'http://localhost:3000') — backend/.env sets FRONTEND_URL to a stale preview URL, not the one in frontend/.env. QR URLs may be wrong. Mismatch between backend FRONTEND_URL=02beef30... and frontend REACT_APP_BACKEND_URL=petfinder-pro... Recommend aligning.",
+    "EmailStr is used so pydantic enforces email syntax — good."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_npw_backend.py (new)",
+    "/app/backend/tests/__init__.py (new, empty)"
+  ],
+  "success_rate": {"backend": "100% (30/30)", "frontend": "N/A — not requested"},
+  "test_credentials": "Admin: admin@globalpetregistry.com / Admin@2025! (verified working). Owner test users created dynamically per run with prefix test_owner_<uuid8>@example.com.",
+  "seed_data_creation": "Each test run creates: 1 owner user, 1 pet, 1 lost report, 1 found report, 1 sighting, 1 vet user+practice, 1 rescue user+org, 1 support ticket, 1 mocked subscription, 1 mocked donation, plus email_log entries. Pet is deleted in cleanup; other docs remain (prefixed with TEST_ / unique IDs).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Use /app/backend/tests/test_npw_backend.py as the regression suite. It auto-generates unique emails per run so re-runnable. Admin is seeded by backend startup. Backend URL: https://petfinder-pro.preview.emergentagent.com. Note: backend/.env FRONTEND_URL is a different preview URL than frontend/.env REACT_APP_BACKEND_URL — may want to confirm with main agent which is the canonical preview.",
+  "rca_of_the_issue": "N/A — no functional issues; only minor non-blocking improvements suggested."
+}

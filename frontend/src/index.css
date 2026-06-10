@@ -2,121 +2,161 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400;1,9..144,500;1,9..144,600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 @import 'leaflet/dist/leaflet.css';
 
 :root {
-  --gpr-bg: #F4EFE6;
-  --gpr-surface: #FFFFFF;
-  --gpr-primary: #1E3F32;
-  --gpr-primary-hover: #162D24;
-  --gpr-secondary: #E5EBE8;
-  --gpr-alert: #C85A40;
-  --gpr-alert-hover: #B04D35;
-  --gpr-success: #3B6954;
-  --gpr-text: #1C2421;
-  --gpr-muted: #6B7570;
-  --gpr-border: #DBD3C5;
-  --gpr-ring: #8CB3A1;
-  --gpr-ink: #1a2922;
+  /* Warm charity / public-service palette — distinct from GOV.UK */
+  --npw-bg: #FFFFFF;
+  --npw-surface: #FFFFFF;
+  --npw-canvas: #F7F4ED;          /* warm cream secondary surface */
+  --npw-cream-deep: #EFE9DA;
+  --npw-text: #1A2129;             /* near-black, warmer than GOV.UK */
+  --npw-text-on-dark: #FFFFFF;
+  --npw-muted: #5C6770;
+  --npw-border: #E1DCCE;
+  --npw-border-strong: #C9C2B0;
 
-  --background: 39 35% 93%;
-  --foreground: 150 7% 13%;
+  --npw-primary: #1F3D4D;          /* deep teal-navy */
+  --npw-primary-hover: #16303D;
+  --npw-primary-soft: #E3ECF0;
+
+  --npw-accent: #E07A3C;           /* warm coral/orange */
+  --npw-accent-hover: #C4682E;
+  --npw-accent-soft: #FCEEDF;
+
+  --npw-success: #2E7A5A;
+  --npw-success-bg: #E7F2EC;
+  --npw-warn: #C13F2A;
+  --npw-warn-bg: #FCEAE3;
+  --npw-info: #3B6FA5;
+  --npw-info-bg: #E8F0F8;
+
+  /* shadcn */
+  --background: 0 0% 100%;
+  --foreground: 215 22% 13%;
   --card: 0 0% 100%;
-  --card-foreground: 150 7% 13%;
+  --card-foreground: 215 22% 13%;
   --popover: 0 0% 100%;
-  --popover-foreground: 150 7% 13%;
-  --primary: 150 36% 19%;
+  --popover-foreground: 215 22% 13%;
+  --primary: 200 42% 21%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 150 12% 91%;
-  --secondary-foreground: 150 7% 13%;
-  --muted: 39 18% 88%;
-  --muted-foreground: 150 6% 43%;
-  --accent: 39 18% 88%;
-  --accent-foreground: 150 7% 13%;
-  --destructive: 13 56% 52%;
+  --secondary: 41 36% 95%;
+  --secondary-foreground: 215 22% 13%;
+  --muted: 41 36% 95%;
+  --muted-foreground: 210 9% 40%;
+  --accent: 25 70% 55%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 9 65% 46%;
   --destructive-foreground: 0 0% 100%;
-  --border: 35 22% 81%;
-  --input: 35 22% 81%;
-  --ring: 150 23% 63%;
-  --radius: 0.25rem;
+  --border: 42 30% 84%;
+  --input: 42 30% 84%;
+  --ring: 200 42% 21%;
+  --radius: 0.75rem;
 }
 
 html, body {
-  background: var(--gpr-bg);
-  color: var(--gpr-text);
-  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  background: var(--npw-bg);
+  color: var(--npw-text);
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, Arial, sans-serif;
+  font-size: 17px;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Paper grain — gives the warm cream background tactile texture */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 1;
-  background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.1, 0 0 0 0 0.1, 0 0 0 0 0.1, 0 0 0 0.5 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
-  opacity: 0.05;
-  mix-blend-mode: multiply;
-}
-#root { position: relative; z-index: 2; }
-
-h1, h2, h3, h4, h5, h6, .font-display {
+h1, h2, h3, h4, h5, h6 {
   font-family: 'Manrope', system-ui, sans-serif;
+  font-weight: 700;
   letter-spacing: -0.015em;
+  color: var(--npw-text);
 }
 
-.font-serif { font-family: 'Fraunces', 'EB Garamond', Georgia, serif; }
-em.accent, .serif-accent { font-family: 'Fraunces', Georgia, serif; font-style: italic; font-weight: 500; }
+a { color: var(--npw-primary); text-underline-offset: 3px; }
+a:hover { color: var(--npw-primary-hover); }
 
-/* Drop cap */
-.dropcap::first-letter {
-  font-family: 'Fraunces', Georgia, serif;
-  font-style: italic;
-  font-weight: 500;
-  float: left;
-  font-size: 5.2em;
-  line-height: 0.85;
-  padding: 0.08em 0.12em 0 0;
-  color: var(--gpr-primary);
+/* Soft focus ring — distinct from GOV.UK yellow */
+*:focus-visible {
+  outline: 3px solid var(--npw-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
-/* Hanging quotes */
-.hang-quote { text-indent: -0.45em; }
-
-::selection { background: var(--gpr-primary); color: #fff; }
+::selection { background: var(--npw-primary); color: #fff; }
 ::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-thumb { background: #cdc4b1; border-radius: 8px; }
-::-webkit-scrollbar-thumb:hover { background: var(--gpr-ring); }
+::-webkit-scrollbar-thumb { background: #c9c2b0; border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: var(--npw-primary); }
 
-.leaflet-popup-content-wrapper { border-radius: 4px; }
-.leaflet-popup-content { font-family: 'IBM Plex Sans', sans-serif; }
+.leaflet-popup-content-wrapper { border-radius: 12px; }
+.leaflet-popup-content { font-family: 'Plus Jakarta Sans', sans-serif; }
 
 @layer utilities {
-  /* No more `gpr-card` class chrome by default — kept for legacy */
-  .gpr-card { @apply bg-white rounded-sm; }
-  .gpr-card-bordered { @apply bg-white border border-[var(--gpr-border)] rounded-sm; }
+  /* Buttons — round pill, solid fills, lift on hover */
+  .npw-btn-action {
+    background: var(--npw-accent); color: #fff;
+    @apply inline-flex items-center gap-2 px-6 py-3 text-[16px] font-semibold rounded-full transition;
+  }
+  .npw-btn-action:hover { background: var(--npw-accent-hover); transform: translateY(-1px); box-shadow: 0 10px 24px -10px rgba(224,122,60,0.5); color:#fff; }
 
-  /* Buttons */
-  .gpr-btn-primary { background: var(--gpr-primary); color:#fff; @apply inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold tracking-wide rounded-sm transition-colors; }
-  .gpr-btn-primary:hover { background: var(--gpr-primary-hover); }
-  .gpr-btn-alert { background: var(--gpr-alert); color:#fff; @apply inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold tracking-wide rounded-sm transition-colors; }
-  .gpr-btn-alert:hover { background: var(--gpr-alert-hover); }
-  .gpr-btn-secondary { @apply inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold tracking-wide rounded-sm border border-[var(--gpr-border)] text-[var(--gpr-primary)] bg-transparent transition-colors; }
-  .gpr-btn-secondary:hover { border-color: var(--gpr-primary); }
+  .npw-btn-primary {
+    background: var(--npw-primary); color: #fff;
+    @apply inline-flex items-center gap-2 px-6 py-3 text-[16px] font-semibold rounded-full transition;
+  }
+  .npw-btn-primary:hover { background: var(--npw-primary-hover); transform: translateY(-1px); box-shadow: 0 10px 24px -10px rgba(31,61,77,0.5); color:#fff; }
 
-  .gpr-link { @apply inline-flex items-center gap-1.5 font-semibold text-[var(--gpr-primary)] pb-0.5 transition-colors; border-bottom: 1px solid rgba(30,63,50,0.35); }
-  .gpr-link:hover { border-bottom-color: var(--gpr-primary); }
-  .gpr-link-alert { @apply inline-flex items-center gap-1.5 font-semibold text-[var(--gpr-alert)] pb-0.5 transition-colors; border-bottom: 1px solid rgba(200,90,64,0.4); }
-  .gpr-link-alert:hover { border-bottom-color: var(--gpr-alert); }
+  .npw-btn-secondary {
+    background: #fff; color: var(--npw-text);
+    @apply inline-flex items-center gap-2 px-6 py-3 text-[16px] font-semibold rounded-full transition;
+    border: 1.5px solid var(--npw-border-strong);
+  }
+  .npw-btn-secondary:hover { background: var(--npw-canvas); border-color: var(--npw-text); }
 
-  .gpr-input { @apply w-full bg-transparent border-0 border-b border-[var(--gpr-border)] px-0 py-3 text-base outline-none transition; }
-  .gpr-input:focus { border-color: var(--gpr-primary); }
-  .gpr-label { @apply block text-[11px] tracking-[0.2em] uppercase font-semibold text-[var(--gpr-muted)] mb-2; }
+  .npw-btn-warning {
+    background: var(--npw-warn); color: #fff;
+    @apply inline-flex items-center gap-2 px-6 py-3 text-[16px] font-semibold rounded-full transition;
+  }
+  .npw-btn-warning:hover { background: #A0331E; color:#fff; transform: translateY(-1px); box-shadow: 0 10px 24px -10px rgba(193,63,42,0.5); }
 
-  .gpr-badge-lost { background:#FDF2F0; color:var(--gpr-alert); border:1px solid #FADCD5; @apply rounded-sm px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider; }
-  .gpr-badge-found { background:#F0F5F2; color:var(--gpr-success); border:1px solid #D5E6DD; @apply rounded-sm px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider; }
-  .gpr-badge-registered { background:transparent; color:var(--gpr-muted); border:1px solid var(--gpr-border); @apply rounded-sm px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider; }
-  .gpr-eyebrow { @apply text-[11px] tracking-[0.25em] uppercase font-semibold text-[var(--gpr-muted)]; }
+  .npw-link { color: var(--npw-primary); font-weight: 600; text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
+  .npw-link:hover { color: var(--npw-primary-hover); text-decoration-thickness: 2px; }
+
+  /* Inputs — rounded, calm */
+  .npw-input {
+    @apply w-full bg-white text-[16px] px-4 py-3 outline-none transition;
+    border: 1.5px solid var(--npw-border-strong);
+    border-radius: 10px;
+  }
+  .npw-input:focus { border-color: var(--npw-primary); box-shadow: 0 0 0 4px rgba(31,61,77,0.12); }
+  .npw-label { @apply block text-[15px] font-semibold text-[var(--npw-text)] mb-1.5; }
+  .npw-hint { @apply block text-[14px] text-[var(--npw-muted)] mb-2; }
+
+  /* Beta service notice — calm cream bar */
+  .npw-phase {
+    background: var(--npw-canvas);
+    @apply flex items-center gap-3 px-4 py-2.5 text-[14px] text-[var(--npw-text)] rounded-full;
+  }
+  .npw-tag-beta {
+    background: var(--npw-accent); color:#fff;
+    @apply inline-flex items-center px-2.5 py-0.5 text-[11px] font-bold tracking-wider rounded-full uppercase;
+  }
+
+  /* Service card — pet-friendly: rounded, soft border, photo-led */
+  .npw-service-card {
+    @apply block bg-white p-6 rounded-2xl transition;
+    border: 1px solid var(--npw-border);
+  }
+  .npw-service-card:hover { border-color: var(--npw-primary); transform: translateY(-2px); box-shadow: 0 18px 40px -22px rgba(31,61,77,0.25); }
+
+  /* Notice strips */
+  .npw-notice-info { background: var(--npw-info-bg); border-left: 6px solid var(--npw-info); padding: 16px 20px; border-radius: 6px; }
+  .npw-notice-warn { background: var(--npw-warn-bg); border-left: 6px solid var(--npw-warn); padding: 16px 20px; border-radius: 6px; }
+  .npw-notice-success { background: var(--npw-success-bg); border-left: 6px solid var(--npw-success); padding: 16px 20px; border-radius: 6px; }
+
+  .npw-inset { border-left: 4px solid var(--npw-cream-deep); padding-left: 20px; }
+
+  /* Badges */
+  .npw-badge-lost { background: var(--npw-warn-bg); color:var(--npw-warn); @apply inline-block px-3 py-1 text-[12px] font-bold rounded-full uppercase tracking-wide; }
+  .npw-badge-found { background: var(--npw-success-bg); color:var(--npw-success); @apply inline-block px-3 py-1 text-[12px] font-bold rounded-full uppercase tracking-wide; }
+  .npw-badge-registered { background: var(--npw-canvas); color:var(--npw-muted); @apply inline-block px-3 py-1 text-[12px] font-bold rounded-full uppercase tracking-wide; border:1px solid var(--npw-border); }
+
+  .npw-eyebrow { @apply inline-block text-[12px] font-bold text-[var(--npw-accent)] uppercase tracking-[0.12em]; }
 }

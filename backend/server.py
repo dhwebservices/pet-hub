@@ -150,17 +150,17 @@ def get_email_client() -> EmailClient:
     return DummyEmail()
 
 # ---------------- Email Templates ----------------
-def tmpl_base(content: str, title: str = "Global Pet Registry") -> str:
+def tmpl_base(content: str, title: str = "National Pet Watch") -> str:
     return f"""<!doctype html><html><body style="font-family:'IBM Plex Sans',Arial,sans-serif;background:#FDFBF7;margin:0;padding:0;color:#1C2421">
 <div style="max-width:640px;margin:0 auto;padding:32px 16px">
-  <div style="text-align:center;padding:16px 0 24px"><span style="font-family:'Manrope',Arial,sans-serif;font-weight:800;font-size:22px;color:#1E3F32;letter-spacing:-0.5px">Global Pet Registry</span></div>
+  <div style="text-align:center;padding:16px 0 24px"><span style="font-family:'Manrope',Arial,sans-serif;font-weight:800;font-size:22px;color:#1E3F32;letter-spacing:-0.5px">National Pet Watch</span></div>
   <div style="background:#fff;border:1px solid #E2E8E4;border-radius:12px;padding:32px">{content}</div>
   <p style="text-align:center;color:#5F736A;font-size:12px;margin-top:24px">The Modern Pet Registry &amp; Recovery Network</p>
 </div></body></html>"""
 
 def tmpl_welcome(name):
     return tmpl_base(f"""<h1 style="font-family:'Manrope',Arial,sans-serif;color:#1E3F32;margin:0 0 12px;font-size:24px">Welcome, {name}</h1>
-<p>Thanks for joining Global Pet Registry — your safety net for pet recovery.</p>
+<p>Thanks for joining National Pet Watch — your safety net for pet recovery.</p>
 <p>Next steps: register your pet, upload a clear photo, and we'll generate a QR profile and emergency contact card you can share if your pet ever goes missing.</p>""")
 
 def tmpl_pet_registered(pet_name):
@@ -177,7 +177,7 @@ def tmpl_lost_alert(pet, last_seen, link):
 <p><strong>Last seen:</strong> {last_seen.get('location','—')} on {last_seen.get('date','—')}</p>
 <p><strong>Description:</strong> {last_seen.get('description','—')}</p>
 <p style="margin-top:24px"><a href="{link}" style="display:inline-block;background:#C85A40;color:#fff;text-decoration:none;padding:12px 24px;border-radius:6px;font-weight:600">Submit a Sighting</a></p>
-<p style="color:#5F736A;font-size:13px;margin-top:24px">You're receiving this because you registered with Global Pet Registry within {os.environ.get('ALERT_RADIUS_MILES','10')} miles of this area.</p>""")
+<p style="color:#5F736A;font-size:13px;margin-top:24px">You're receiving this because you registered with National Pet Watch within {os.environ.get('ALERT_RADIUS_MILES','10')} miles of this area.</p>""")
 
 # ---------------- Models ----------------
 class UserRegister(BaseModel):
@@ -277,7 +277,7 @@ class SupportTicket(BaseModel):
     message: str
 
 # ---------------- App Setup ----------------
-app = FastAPI(title="Global Pet Registry API")
+app = FastAPI(title="National Pet Watch API")
 api = APIRouter(prefix="/api")
 
 # ---------------- Auth Endpoints ----------------
@@ -312,7 +312,7 @@ async def register(data: UserRegister, response: Response):
     response.set_cookie("access_token", access, httponly=True, samesite="lax", max_age=43200, path="/")
     response.set_cookie("refresh_token", refresh, httponly=True, samesite="lax", max_age=604800, path="/")
     em = get_email_client()
-    asyncio.create_task(em.send([email], "Welcome to Global Pet Registry", tmpl_welcome(data.first_name)))
+    asyncio.create_task(em.send([email], "Welcome to National Pet Watch", tmpl_welcome(data.first_name)))
     return {"user": user, "access_token": access}
 
 @api.post("/auth/login")
@@ -801,7 +801,7 @@ async def admin_email_log(user: dict = Depends(require_role("admin"))):
 # ---------------- Health ----------------
 @api.get("/")
 async def root():
-    return {"name": "Global Pet Registry API", "status": "ok"}
+    return {"name": "National Pet Watch API", "status": "ok"}
 
 app.include_router(api)
 app.add_middleware(
