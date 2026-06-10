@@ -25,7 +25,7 @@ from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depend
 from fastapi.responses import JSONResponse, StreamingResponse
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
-from pydantic import BaseModel, Field, EmailStr, ConfigDict
+from pydantic import BaseModel, Field, EmailStr, ConfigDict, field_validator
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("npw")
@@ -72,15 +72,21 @@ def make_refresh_token(uid: str) -> str:
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
-def validate_password_strength(password: str):
+def password_strength_error(password: str) -> Optional[str]:
     if len(password) < 10:
-        raise HTTPException(400, "Password must be at least 10 characters")
+        return "Password must be at least 10 characters."
     if not re.search(r"[A-Z]", password) or not re.search(r"[a-z]", password):
-        raise HTTPException(400, "Password must include upper and lower case letters")
+        return "Password must include upper and lower case letters."
     if not re.search(r"\d", password):
-        raise HTTPException(400, "Password must include a number")
+        return "Password must include a number."
     if not re.search(r"[^A-Za-z0-9]", password):
-        raise HTTPException(400, "Password must include a symbol")
+        return "Password must include a symbol."
+    return None
+
+def validate_password_strength(password: str):
+    message = password_strength_error(password)
+    if message:
+        raise HTTPException(400, message)
 
 def csrf_token() -> str:
     return secrets.token_urlsafe(32)
@@ -240,7 +246,7 @@ def tmpl_lost_alert(pet, last_seen, link):
 # ---------------- Models ----------------
 class UserRegister(BaseModel):
     email: EmailStr
-    password: str = Field(min_length=10, max_length=128)
+    password: str = Field(max_length=128)
     first_name: str = Field(min_length=1, max_length=80)
     last_name: str = Field(min_length=1, max_length=80)
     phone: Optional[str] = Field(default="", max_length=40)
@@ -249,6 +255,14 @@ class UserRegister(BaseModel):
     county: Optional[str] = Field(default="", max_length=120)
     postcode: Optional[str] = Field(default="", max_length=16)
     country: Optional[str] = "UK"
+
+    @field_validator("password")
+    @classmethod
+    def password_strength(cls, value: str) -> str:
+        message = password_strength_error(value)
+        if message:
+            raise ValueError(message)
+        return value
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -329,7 +343,7 @@ class VetRegister(BaseModel):
     postcode: str
     country: Optional[str] = "UK"
     license_number: Optional[str] = ""
-    password: str = Field(min_length=10, max_length=128)
+    password: str = Field(max_length=128)
 
 class RescueRegister(BaseModel):
     organisation_name: str
@@ -340,7 +354,7 @@ class RescueRegister(BaseModel):
     postcode: str
     country: Optional[str] = "UK"
     registration_number: Optional[str] = ""
-    password: str = Field(min_length=10, max_length=128)
+    password: str = Field(max_length=128)
 
 class SupportTicket(BaseModel):
     name: str
@@ -385,7 +399,6 @@ async def security_middleware(request: Request, call_next):
 @api.post("/auth/register")
 async def register(data: UserRegister, response: Response):
     email = data.email.lower()
-    validate_password_strength(data.password)
     if await db.users.find_one({"email": email}):
         raise HTTPException(400, "Email already registered")
     role = await db.roles.find_one({"slug": "owner"}, {"_id": 0})

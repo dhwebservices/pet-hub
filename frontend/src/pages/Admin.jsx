@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { api } from "../lib/api";
-import { useAuth } from "../lib/auth";
+import { fmtErr, useAuth } from "../lib/auth";
 
 const tabs = ["stats","users","pets","vets","rescues","support","donations","email-log"];
 
@@ -9,15 +9,24 @@ export default function Admin() {
   const { user, loading } = useAuth();
   const [tab, setTab] = useState("stats");
   const [data, setData] = useState(null);
+  const [err, setErr] = useState("");
 
   useEffect(() => {
     if (!user || user.role !== 'administrator') return;
     setData(null);
-    api.get(`/admin/${tab}`).then(r=>setData(r.data));
+    setErr("");
+    api.get(`/admin/${tab}`)
+      .then(r=>setData(r.data))
+      .catch(e=>{
+        setData([]);
+        setErr(fmtErr(e.response?.data?.detail) || e.message);
+      });
   }, [tab, user]);
 
   if (loading) return <div className="py-24 text-center text-[var(--npw-muted)]">Loading…</div>;
   if (!user || user.role !== 'administrator') return <Navigate to="/login"/>;
+  const rows = Array.isArray(data) ? data : [];
+  const columns = rows.length > 0 ? Object.keys(rows[0]).slice(0, 6) : [];
 
   return (
     <div data-testid="admin-page" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">
@@ -35,7 +44,12 @@ export default function Admin() {
         </div>
       </div>
       <div className="mt-12 overflow-x-auto">
-        {data === null ? <div className="text-[var(--npw-muted)]">Loading…</div> : (
+        {err ? (
+          <div className="npw-notice-warn" data-testid="admin-error">
+            <div className="font-bold text-[var(--npw-text)]">Could not load {tab.replace(/-/g, " ")}.</div>
+            <p className="text-sm text-[var(--npw-muted)] mt-1">{err}</p>
+          </div>
+        ) : data === null ? <div className="text-[var(--npw-muted)]">Loading…</div> : (
           tab === "stats" ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-10 gap-y-10">
               {Object.entries(data).map(([k,v]) => (
@@ -45,15 +59,15 @@ export default function Admin() {
                 </div>
               ))}
             </div>
-          ) : Array.isArray(data) && data.length === 0 ? <div className="text-[var(--npw-muted)]">No records.</div> : (
+          ) : rows.length === 0 ? <div className="text-[var(--npw-muted)]">No records.</div> : (
             <table className="w-full text-sm" data-testid={`admin-table-${tab}`}>
               <thead><tr className="text-left font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--npw-muted)] border-b border-[var(--npw-border)]">
-                {Object.keys(data[0]).slice(0,6).map(k => <th key={k} className="py-3 pr-6 font-medium">{k}</th>)}
+                {columns.map(k => <th key={k} className="py-3 pr-6 font-medium">{k}</th>)}
               </tr></thead>
               <tbody>
-                {data.map((row,i)=>(
+                {rows.map((row,i)=>(
                   <tr key={i} className="border-b border-[var(--npw-border)]">
-                    {Object.keys(data[0]).slice(0,6).map(k => (
+                    {columns.map(k => (
                       <td key={k} className="py-3 pr-6 align-top">{typeof row[k] === 'object' ? JSON.stringify(row[k]).slice(0,80) : String(row[k] ?? '—').slice(0,100)}</td>
                     ))}
                   </tr>

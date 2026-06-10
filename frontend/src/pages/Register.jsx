@@ -9,9 +9,21 @@ export default function Register() {
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
   const set = (k,v) => setF(s => ({...s, [k]: v}));
+  const passwordValid = f.password.length >= 10 && /[A-Z]/.test(f.password) && /[a-z]/.test(f.password) && /\d/.test(f.password) && /[^A-Za-z0-9]/.test(f.password);
+  const postcodeValid = f.postcode.trim().length >= 3;
 
   const submit = async (e) => {
     e.preventDefault(); setErr(""); setLoading(true);
+    if (!passwordValid) {
+      setErr("Password must be at least 10 characters and include upper and lower case letters, a number and a symbol.");
+      setLoading(false);
+      return;
+    }
+    if (!postcodeValid) {
+      setErr("Enter a valid postcode so local lost-pet alerts can work.");
+      setLoading(false);
+      return;
+    }
     try { await register(f); nav("/dashboard"); }
     catch(e){ setErr(fmtErr(e.response?.data?.detail) || e.message); } finally { setLoading(false); }
   };
@@ -32,7 +44,11 @@ export default function Register() {
               <div><label className="npw-label">First name</label><input data-testid="reg-first" required className="npw-input" value={f.first_name} onChange={e=>set('first_name', e.target.value)}/></div>
               <div><label className="npw-label">Last name</label><input data-testid="reg-last" required className="npw-input" value={f.last_name} onChange={e=>set('last_name', e.target.value)}/></div>
               <div><label className="npw-label">Email</label><input data-testid="reg-email" type="email" required className="npw-input" value={f.email} onChange={e=>set('email', e.target.value)}/></div>
-              <div><label className="npw-label">Password</label><input data-testid="reg-password" type="password" required minLength={8} className="npw-input" value={f.password} onChange={e=>set('password', e.target.value)}/></div>
+              <div>
+                <label className="npw-label">Password</label>
+                <input data-testid="reg-password" type="password" required minLength={10} className="npw-input" value={f.password} onChange={e=>set('password', e.target.value)} aria-describedby="password-hint"/>
+                <span id="password-hint" className="npw-hint mt-2">Use at least 10 characters, with upper and lower case letters, a number and a symbol.</span>
+              </div>
               <div className="sm:col-span-2"><label className="npw-label">Phone</label><input data-testid="reg-phone" className="npw-input" value={f.phone} onChange={e=>set('phone', e.target.value)}/></div>
             </div>
           </fieldset>
@@ -43,7 +59,7 @@ export default function Register() {
               <div className="sm:col-span-2"><label className="npw-label">Address</label><input data-testid="reg-address" className="npw-input" value={f.address} onChange={e=>set('address', e.target.value)}/></div>
               <div><label className="npw-label">Town</label><input data-testid="reg-town" className="npw-input" value={f.town} onChange={e=>set('town', e.target.value)}/></div>
               <div><label className="npw-label">County</label><input data-testid="reg-county" className="npw-input" value={f.county} onChange={e=>set('county', e.target.value)}/></div>
-              <div><label className="npw-label">Postcode</label><input data-testid="reg-postcode" required className="npw-input" value={f.postcode} onChange={e=>set('postcode', e.target.value)}/></div>
+              <div><label className="npw-label">Postcode</label><input data-testid="reg-postcode" required minLength={3} className="npw-input" value={f.postcode} onChange={e=>set('postcode', e.target.value)}/></div>
               <div><label className="npw-label">Country</label>
                 <select className="npw-input" value={f.country} onChange={e=>set('country', e.target.value)}>
                   <option value="UK">United Kingdom</option><option value="IE">Ireland</option><option value="US">United States</option><option value="CA">Canada</option><option value="AU">Australia</option>

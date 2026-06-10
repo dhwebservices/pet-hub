@@ -38,6 +38,12 @@ export const useAuth = () => useContext(AuthCtx);
 export function fmtErr(detail) {
   if (detail == null) return "Something went wrong";
   if (typeof detail === "string") return detail;
-  if (Array.isArray(detail)) return detail.map(e => e?.msg || JSON.stringify(e)).join(" ");
+  if (Array.isArray(detail)) return detail.map(e => {
+    const field = Array.isArray(e?.loc) ? e.loc.filter(p => p !== "body").join(" ") : "";
+    if (e?.type === "string_too_short" && field === "password") return "Password must be at least 10 characters.";
+    if (e?.type === "string_too_short" && field) return `${field} is too short.`;
+    if (e?.type === "value_error" && e?.msg) return e.msg.replace(/^Value error,\s*/i, "");
+    return e?.msg || JSON.stringify(e);
+  }).join(" ");
   return String(detail);
 }

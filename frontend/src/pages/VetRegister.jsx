@@ -9,8 +9,14 @@ export default function VetRegister() {
   const [f, setF] = useState({ practice_name:"", contact_name:"", email:"", phone:"", address:"", postcode:"", country:"UK", license_number:"", password:"" });
   const [err, setErr] = useState(""); const [loading, setLoading] = useState(false);
   const set = (k,v) => setF(s => ({...s, [k]: v}));
+  const passwordValid = f.password.length >= 10 && /[A-Z]/.test(f.password) && /[a-z]/.test(f.password) && /\d/.test(f.password) && /[^A-Za-z0-9]/.test(f.password);
   const submit = async (e) => {
     e.preventDefault(); setErr(""); setLoading(true);
+    if (!passwordValid) {
+      setErr("Password must be at least 10 characters and include upper and lower case letters, a number and a symbol.");
+      setLoading(false);
+      return;
+    }
     try { await api.post("/vet/register", f); const me = await api.get("/auth/me"); setUser(me.data); nav("/dashboard"); }
     catch(e){ setErr(fmtErr(e.response?.data?.detail) || e.message); } finally { setLoading(false); }
   };
@@ -34,7 +40,11 @@ export default function VetRegister() {
           <div><label className="npw-label">Postcode</label><input required className="npw-input" value={f.postcode} onChange={e=>set('postcode', e.target.value)}/></div>
           <div><label className="npw-label">Country</label><input className="npw-input" value={f.country} onChange={e=>set('country', e.target.value)}/></div>
         </div>
-        <div><label className="npw-label">Password</label><input required type="password" minLength={8} className="npw-input" value={f.password} onChange={e=>set('password', e.target.value)}/></div>
+        <div>
+          <label className="npw-label">Password</label>
+          <input required type="password" minLength={10} className="npw-input" value={f.password} onChange={e=>set('password', e.target.value)}/>
+          <span className="npw-hint mt-2">Use at least 10 characters, with upper and lower case letters, a number and a symbol.</span>
+        </div>
         {err && <div className="text-sm text-[var(--npw-warn)] italic">{err}</div>}
         <div className="pt-6 border-t border-[var(--npw-border)] flex justify-end">
           <button data-testid="vet-submit" disabled={loading} className="npw-btn-primary">{loading? "Submitting…" : "Submit for verification →"}</button>
