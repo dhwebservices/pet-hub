@@ -26,6 +26,7 @@ export default function Admin() {
   if (loading) return <div className="py-24 text-center text-[var(--npw-muted)]">Loading…</div>;
   if (!user || user.role !== 'administrator') return <Navigate to="/login"/>;
   const rows = Array.isArray(data) ? data : [];
+  const stats = data && !Array.isArray(data) && typeof data === "object" ? data : {};
   const columns = rows.length > 0 ? Object.keys(rows[0]).slice(0, 6) : [];
 
   return (
@@ -52,12 +53,13 @@ export default function Admin() {
         ) : data === null ? <div className="text-[var(--npw-muted)]">Loading…</div> : (
           tab === "stats" ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-10 gap-y-10">
-              {Object.entries(data).map(([k,v]) => (
+              {Object.entries(stats).map(([k,v]) => (
                 <div key={k} className="border-t border-[var(--npw-border)] pt-4">
                   <div className="npw-eyebrow text-[var(--npw-muted)]">{k.replace(/_/g," ")}</div>
                   <div className="font-extrabold text-5xl text-[var(--npw-text)] mt-3">{v}</div>
                 </div>
               ))}
+              {Object.keys(stats).length === 0 && <div className="text-[var(--npw-muted)]">No statistics available.</div>}
             </div>
           ) : rows.length === 0 ? <div className="text-[var(--npw-muted)]">No records.</div> : (
             <table className="w-full text-sm" data-testid={`admin-table-${tab}`}>

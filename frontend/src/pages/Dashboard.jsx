@@ -1,16 +1,42 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, API } from "../lib/api";
-import { useAuth } from "../lib/auth";
+import { fmtErr, useAuth } from "../lib/auth";
 
 export default function Dashboard() {
   const { user } = useAuth();
   const [pets, setPets] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [busyPet, setBusyPet] = useState("");
+  const [err, setErr] = useState("");
+  const [msg, setMsg] = useState("");
+  const loadPets = () => {
+    setLoading(true);
+    setErr("");
+    return api.get("/pets/mine")
+      .then(r=>setPets(Array.isArray(r.data) ? r.data : []))
+      .catch(e=>setErr(fmtErr(e.response?.data?.detail) || e.message))
+      .finally(()=>setLoading(false));
+  };
   useEffect(() => {
     if (!user) { setLoading(false); return; }
-    api.get("/pets/mine").then(r=>{setPets(r.data); setLoading(false);}).catch(()=>setLoading(false));
+    loadPets();
   }, [user]);
+  const markFound = async (pet) => {
+    if (!window.confirm(`Mark ${pet.name} as found and remove the lost status?`)) return;
+    setBusyPet(pet.id);
+    setErr("");
+    setMsg("");
+    try {
+      await api.post(`/pets/${pet.id}/mark-found`);
+      setPets(items => items.map(item => item.id === pet.id ? { ...item, status: "registered" } : item));
+      setMsg(`${pet.name} has been marked as found.`);
+    } catch (e) {
+      setErr(fmtErr(e.response?.data?.detail) || e.message);
+    } finally {
+      setBusyPet("");
+    }
+  };
   if (!user) return <div className="py-24 text-center text-[var(--npw-muted)]">Please sign in.</div>;
   return (
     <div data-testid="dashboard-page" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-24">
@@ -37,6 +63,8 @@ export default function Dashboard() {
 
         <section className="md:col-span-9">
           <div className="text-[12px] font-bold uppercase tracking-wider text-[var(--npw-muted)] mb-6">Your pets &middot; {pets.length} record{pets.length===1?"":"s"}</div>
+          {err && <div className="npw-notice-warn mb-6" data-testid="dashboard-error">{err}</div>}
+          {msg && <div className="npw-notice-success mb-6" data-testid="dashboard-message">{msg}</div>}
           {loading ? <div className="text-[var(--npw-muted)]">Loading…</div> :
             pets.length === 0 ? (
               <div className="border-t border-[var(--npw-border)] pt-12 pb-12" data-testid="dashboard-empty">
@@ -59,6 +87,17 @@ export default function Dashboard() {
                       <Link to={`/p/${p.id}`} className="npw-link">View profile →</Link>
                       <a href={`${API}/pets/${p.id}/qr`} target="_blank" rel="noreferrer" className="npw-link">QR record →</a>
                       {p.status !== 'lost' && <Link to="/report-lost" className="npw-link">Report lost →</Link>}
+                      {p.status === 'lost' && (
+                        <button
+                          type="button"
+                          onClick={()=>markFound(p)}
+                          disabled={busyPet === p.id}
+                          className="npw-link text-left disabled:opacity-60"
+                          data-testid={`mark-found-${p.id}`}
+                        >
+                          {busyPet === p.id ? "Updating…" : "Mark found →"}
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}

@@ -504,6 +504,21 @@ async def delete_pet(pet_id: str, user: dict = Depends(get_current_user)):
     await db.pets.delete_one({"id": pet_id})
     return {"ok": True}
 
+@api.post("/pets/{pet_id}/mark-found")
+async def mark_pet_found_by_pet_id(pet_id: str, user: dict = Depends(get_current_user)):
+    pet = await db.pets.find_one({"id": pet_id})
+    if not pet:
+        raise HTTPException(404, "Pet not found")
+    if pet["owner_id"] != user["id"] and user.get("role") != "administrator":
+        raise HTTPException(403, "Not allowed")
+
+    result = await db.lost_reports.update_many(
+        {"pet_id": pet_id, "status": "active"},
+        {"$set": {"status": "found", "resolved_at": now_iso(), "resolved_by": user["id"]}},
+    )
+    await db.pets.update_one({"id": pet_id}, {"$set": {"status": "registered"}})
+    return {"ok": True, "resolved_reports": result.modified_count}
+
 @api.post("/emergency-contacts")
 async def create_emergency_contact(data: EmergencyContactCreate, user: dict = Depends(get_current_user)):
     pet = await db.pets.find_one({"id": data.pet_id})
