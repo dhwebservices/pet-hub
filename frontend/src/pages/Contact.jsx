@@ -12,11 +12,11 @@ export default function Contact() {
       <div className="md:col-span-4 md:col-start-9 space-y-10 md:pt-6">
         <div>
           <div className="npw-eyebrow text-[var(--npw-muted)] mb-3">General &amp; account</div>
-          <a href="mailto:hello@globalpetregistry.com" className="font-bold text-xl text-[var(--npw-text)] border-b border-[var(--npw-text)]/30 hover:border-[var(--npw-text)] pb-0.5">hello@globalpetregistry.com</a>
+          <a href="mailto:hello@nationalpetwatch.co.uk" className="font-bold text-xl text-[var(--npw-text)] border-b border-[var(--npw-text)]/30 hover:border-[var(--npw-text)] pb-0.5">hello@nationalpetwatch.co.uk</a>
         </div>
         <div>
           <div className="npw-eyebrow text-[var(--npw-muted)] mb-3">Press &amp; partnerships</div>
-          <a href="mailto:press@globalpetregistry.com" className="font-bold text-xl text-[var(--npw-text)] border-b border-[var(--npw-text)]/30 hover:border-[var(--npw-text)] pb-0.5">press@globalpetregistry.com</a>
+          <a href="mailto:press@nationalpetwatch.co.uk" className="font-bold text-xl text-[var(--npw-text)] border-b border-[var(--npw-text)]/30 hover:border-[var(--npw-text)] pb-0.5">press@nationalpetwatch.co.uk</a>
         </div>
         <div>
           <div className="npw-eyebrow text-[var(--npw-muted)] mb-3">Or open a support ticket</div>

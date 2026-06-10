@@ -4,7 +4,7 @@ const sections = [
   { t: "Acceptance", c: "By using National Pet Watch you agree to these terms. If you do not agree, please do not use the service." },
   { t: "Accurate information", c: "You agree to provide accurate, current information for yourself and your pet. Misuse of the alert network is grounds for account suspension." },
   { t: "Service availability", c: "We provide the platform 'as is' and aim for high availability, but no guarantees are made against outages, network delays or third-party service interruptions." },
-  { t: "Subscriptions", c: "Premium subscriptions are billed monthly via Stripe and can be cancelled at any time from your dashboard. Refunds are handled case by case." },
+  { t: "Free access and donations", c: "National Pet Watch is free to use. Donations are optional, do not unlock additional platform features, and do not affect access to any recovery tools." },
   { t: "Liability", c: "National Pet Watch is a recovery network and best-effort communication platform. We do not guarantee recovery or replace local authorities, microchip databases or veterinary care." },
 ];
 

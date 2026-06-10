@@ -5,7 +5,7 @@ const sections = [
   { t: "How we use your data", c: "To operate the registry, dispatch lost-pet alerts in your area, and provide secure veterinary or rescue verification. We never sell personal data." },
   { t: "Public information", c: "QR pet profiles show the pet's name, photo, emergency contact and medical alerts. Owner home addresses are never displayed publicly." },
   { t: "Cookies", c: "We use a session cookie to keep you signed in. No third-party tracking cookies." },
-  { t: "Your rights", c: "You can edit, export or delete your data at any time from your dashboard. Email support@globalpetregistry.com for assistance." },
+  { t: "Your rights", c: "You can edit, export or delete your data at any time from your dashboard. Email support@nationalpetwatch.co.uk for assistance." },
 ];
 
 export default function Privacy() {

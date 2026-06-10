@@ -1,8 +1,8 @@
 """National Pet Watch — comprehensive backend regression tests.
 
 Covers: health, auth (register/login/me), pets (CRUD, QR, public detail),
-lost/found/sighting flows, map markers, search, vet/rescue, subscriptions
-(MOCKED), donations (MOCKED), admin endpoints, support, image upload.
+lost/found/sighting flows, map markers, search, vet/rescue, donations,
+admin endpoints, support, image upload.
 """
 import os
 import time
@@ -11,11 +11,11 @@ import io
 import pytest
 import requests
 
-BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://petfinder-pro.preview.emergentagent.com").rstrip("/")
+BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "http://localhost:8001").rstrip("/")
 API = f"{BASE_URL}/api"
 
-ADMIN_EMAIL = "admin@globalpetregistry.com"
-ADMIN_PASSWORD = "Admin@2025!"
+ADMIN_EMAIL = "admin@nationalpetwatch.co.uk"
+ADMIN_PASSWORD = "ChangeMe-Admin-2026!"
 
 # Unique test owner credentials per run
 UNIQ = uuid.uuid4().hex[:8]
@@ -64,7 +64,6 @@ def test_owner_register(session):
     user = data["user"]
     assert user["email"] == OWNER_EMAIL.lower()
     assert user["role"] == "owner"
-    assert user["subscription_tier"] == "free"
     assert "id" in user
     assert "password_hash" not in user
     state["owner_token"] = data["access_token"]
@@ -204,7 +203,7 @@ def test_found_report_create(session):
         "color": "black",
         "location": "SW1A 1AA",
         "notes": "Found wandering",
-        "microchip": state["microchip"],  # should trigger owner notification (mocked email)
+        "microchip": state["microchip"],  # should trigger owner notification
         "reporter_name": "Jane Public",
         "reporter_email": f"finder_{UNIQ}@example.com",
         "reporter_phone": "07111111111",
@@ -308,36 +307,18 @@ def test_rescue_register(session):
     assert "rescue_id" in data
 
 
-# --------------- Subscription (MOCKED) ---------------
-def test_subscription_checkout_mocked(session):
-    r = session.post(f"{API}/subscriptions/checkout", headers=_owner_headers())
-    assert r.status_code == 200, r.text
-    data = r.json()
-    assert data.get("mocked") is True
-    # Verify user tier flipped
-    me = session.get(f"{API}/auth/me", headers=_owner_headers()).json()
-    assert me["subscription_tier"] == "premium"
-
-
-def test_subscription_cancel(session):
-    r = session.post(f"{API}/subscriptions/cancel", headers=_owner_headers())
-    assert r.status_code == 200
-    me = session.get(f"{API}/auth/me", headers=_owner_headers()).json()
-    assert me["subscription_tier"] == "free"
-
-
-# --------------- Donations (MOCKED) ---------------
-def test_donation_create_and_capture_mocked(session):
+# --------------- Donations ---------------
+def test_donation_create_and_capture(session):
     r = session.post(f"{API}/donations/create", params={"amount": 10, "currency": "GBP"})
     assert r.status_code == 200, r.text
     data = r.json()
-    assert data.get("mocked") is True
     assert "order_id" in data
+    assert data.get("donation_url", "").startswith("https://www.paypal.com/donate/")
     order_id = data["order_id"]
 
     r2 = session.post(f"{API}/donations/capture/{order_id}")
     assert r2.status_code == 200, r2.text
-    assert r2.json().get("mocked") is True
+    assert r2.json().get("ok") is True
 
 
 # --------------- Support ticket ---------------
@@ -384,7 +365,7 @@ def test_admin_stats(session, admin_token):
     assert r.status_code == 200, r.text
     s = r.json()
     for key in ("users", "pets", "lost", "found", "sightings", "vets", "rescues",
-                "subscriptions_active", "support_tickets_open"):
+                "support_tickets_open"):
         assert key in s, f"Missing key {key} in admin stats"
         assert isinstance(s[key], int)
     assert s["users"] >= 1

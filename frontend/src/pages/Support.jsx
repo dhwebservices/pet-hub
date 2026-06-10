@@ -7,7 +7,7 @@ import { Link } from "react-router-dom";
 const TOPICS = [
   "Account & registration",
   "Reporting a lost or found pet",
-  "Subscription & billing",
+  "Donations & partnerships",
   "Veterinary / rescue verification",
   "Press & partnerships",
   "Something else",
@@ -58,17 +58,17 @@ export default function Support() {
         <aside className="md:col-span-4 space-y-10 md:pt-2">
           <div>
             <div className="text-[11px] tracking-[0.28em] uppercase font-semibold text-[var(--npw-muted)] mb-4">Direct channels</div>
-            <a href="mailto:hello@globalpetregistry.com" className="flex items-start gap-4 py-3 border-t border-[var(--npw-border)] hover:opacity-80">
+            <a href="mailto:hello@nationalpetwatch.co.uk" className="flex items-start gap-4 py-3 border-t border-[var(--npw-border)] hover:opacity-80">
               <Mail className="w-5 h-5 text-[var(--npw-text)] mt-0.5"/>
               <div>
-                <div className="font-semibold text-[var(--npw-text)]">hello@globalpetregistry.com</div>
+                <div className="font-semibold text-[var(--npw-text)]">hello@nationalpetwatch.co.uk</div>
                 <div className="text-sm text-[var(--npw-muted)] mt-0.5">General &amp; account enquiries</div>
               </div>
             </a>
-            <a href="mailto:press@globalpetregistry.com" className="flex items-start gap-4 py-3 border-t border-[var(--npw-border)] hover:opacity-80">
+            <a href="mailto:press@nationalpetwatch.co.uk" className="flex items-start gap-4 py-3 border-t border-[var(--npw-border)] hover:opacity-80">
               <MessagesSquare className="w-5 h-5 text-[var(--npw-text)] mt-0.5"/>
               <div>
-                <div className="font-semibold text-[var(--npw-text)]">press@globalpetregistry.com</div>
+                <div className="font-semibold text-[var(--npw-text)]">press@nationalpetwatch.co.uk</div>
                 <div className="text-sm text-[var(--npw-muted)] mt-0.5">Media &amp; partnerships</div>
               </div>
             </a>
@@ -78,7 +78,7 @@ export default function Support() {
             <div className="text-[11px] tracking-[0.28em] uppercase font-semibold text-[var(--npw-muted)] mb-4">Useful answers</div>
             <ul className="space-y-3 text-sm">
               <li><Link to="/about" className="text-[var(--npw-text)] hover:text-[var(--npw-text)] inline-flex items-center gap-1.5">How the alert network works <ArrowUpRight className="w-3.5 h-3.5"/></Link></li>
-              <li><Link to="/subscribe" className="text-[var(--npw-text)] hover:text-[var(--npw-text)] inline-flex items-center gap-1.5">What's included in Premium <ArrowUpRight className="w-3.5 h-3.5"/></Link></li>
+              <li><Link to="/donate" className="text-[var(--npw-text)] hover:text-[var(--npw-text)] inline-flex items-center gap-1.5">How optional donations support the service <ArrowUpRight className="w-3.5 h-3.5"/></Link></li>
               <li><Link to="/privacy" className="text-[var(--npw-text)] hover:text-[var(--npw-text)] inline-flex items-center gap-1.5">How your data is handled <ArrowUpRight className="w-3.5 h-3.5"/></Link></li>
               <li><Link to="/vet-register" className="text-[var(--npw-text)] hover:text-[var(--npw-text)] inline-flex items-center gap-1.5">Verifying a veterinary practice <ArrowUpRight className="w-3.5 h-3.5"/></Link></li>
             </ul>

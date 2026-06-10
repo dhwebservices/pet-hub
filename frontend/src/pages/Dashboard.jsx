@@ -18,7 +18,7 @@ export default function Dashboard() {
         <div className="md:col-span-8">
           <div className="text-[12px] font-bold uppercase tracking-wider text-[var(--npw-muted)] mb-5">Member Dashboard · {new Date().toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long'})}</div>
           <h1 className="font-extrabold text-5xl md:text-6xl text-[var(--npw-text)] leading-[1]">Welcome, <span className="text-[var(--npw-accent)]">{user.first_name}</span>.</h1>
-          <p className="text-[var(--npw-muted)] text-lg mt-5 max-w-xl leading-[1.55]">Your registered pets, their alert profiles and your subscription — all in one place.</p>
+          <p className="text-[var(--npw-muted)] text-lg mt-5 max-w-xl leading-[1.55]">Your registered pets, alert profiles and recovery tools — all in one place.</p>
         </div>
         <div className="md:col-span-3 md:col-start-10 mt-6 md:mt-0 text-right">
           <Link to="/register-pet" data-testid="dashboard-add-pet" className="npw-link">Register another pet →</Link>
@@ -30,9 +30,9 @@ export default function Dashboard() {
           <div className="npw-eyebrow text-[var(--npw-muted)] mb-3">Account</div>
           <div className="font-bold text-lg text-[var(--npw-text)]">{user.first_name} {user.last_name}</div>
           <div className="italic text-sm text-[var(--npw-muted)] mt-1">{user.email}</div>
-          <div className="mt-8 npw-eyebrow text-[var(--npw-muted)] mb-3">Plan</div>
-          <div className="text-sm">{user.subscription_tier==='premium' ? <span className="text-[var(--npw-action)] font-semibold">Premium &middot; active</span> : <span className="text-[var(--npw-text)]">Free tier</span>}</div>
-          <Link to="/subscribe" data-testid="dashboard-subscribe" className="npw-link mt-4 inline-flex text-sm">{user.subscription_tier==='premium'?'Manage':'Upgrade to Premium'} →</Link>
+          <div className="mt-8 npw-eyebrow text-[var(--npw-muted)] mb-3">Access</div>
+          <div className="text-sm text-[var(--npw-text)]">All National Pet Watch features are free to use.</div>
+          <Link to="/donate" data-testid="dashboard-donate" className="npw-link mt-4 inline-flex text-sm">Support the service →</Link>
         </aside>
 
         <section className="md:col-span-9">

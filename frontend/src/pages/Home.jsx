@@ -94,7 +94,7 @@ export default function Home() {
               <div className="npw-eyebrow mb-3">Services</div>
               <h2 className="text-[32px] md:text-[40px] leading-tight font-extrabold">Everything we offer, in one place.</h2>
             </div>
-            <p className="text-[16px] text-[var(--npw-muted)] max-w-md">All services are free at the point of use. Donations and supporter memberships keep them that way.</p>
+            <p className="text-[16px] text-[var(--npw-muted)] max-w-md">All services are free to use. Optional donations help keep them that way.</p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {[
@@ -144,25 +144,25 @@ export default function Home() {
           <div className="grid md:grid-cols-12 gap-8 items-start">
             <div className="md:col-span-5">
               <div className="npw-eyebrow mb-3">Supporting the service</div>
-              <h2 className="text-[32px] md:text-[40px] leading-tight font-extrabold">Free for owners. <br/>Funded by people who care.</h2>
-              <p className="mt-5 text-[17px] text-[var(--npw-muted)] leading-relaxed max-w-md">National Pet Watch is free for owners. Donations and supporter memberships keep the alert network running and free at the point of use.</p>
+              <h2 className="text-[32px] md:text-[40px] leading-tight font-extrabold">Free for everyone. <br/>Funded by people who care.</h2>
+              <p className="mt-5 text-[17px] text-[var(--npw-muted)] leading-relaxed max-w-md">National Pet Watch is provided free of charge. If our platform has helped reunite a pet with its family, please consider supporting our work.</p>
             </div>
             <div className="md:col-span-7 grid sm:grid-cols-2 gap-5">
               <div className="bg-[var(--npw-canvas)] p-6 rounded-2xl">
-                <div className="npw-eyebrow">Monthly supporter</div>
-                <div className="mt-3 flex items-baseline gap-2"><span className="text-[42px] font-extrabold leading-none">£2.99</span><span className="text-[15px] text-[var(--npw-muted)]">/ month</span></div>
+                <div className="npw-eyebrow">Optional support</div>
+                <div className="mt-3 flex items-baseline gap-2"><span className="text-[42px] font-extrabold leading-none">Free</span><span className="text-[15px] text-[var(--npw-muted)]">for every user</span></div>
                 <ul className="mt-5 space-y-2 text-[15px]">
-                  <li className="flex gap-2"><span className="text-[var(--npw-success)] font-bold">✓</span> Family account access</li>
-                  <li className="flex gap-2"><span className="text-[var(--npw-success)] font-bold">✓</span> Medical record vault</li>
-                  <li className="flex gap-2"><span className="text-[var(--npw-success)] font-bold">✓</span> Priority alerts within 25 mi</li>
+                  <li className="flex gap-2"><span className="text-[var(--npw-success)] font-bold">✓</span> Pet registration</li>
+                  <li className="flex gap-2"><span className="text-[var(--npw-success)] font-bold">✓</span> Lost and found alerts</li>
+                  <li className="flex gap-2"><span className="text-[var(--npw-success)] font-bold">✓</span> Veterinary and rescue participation</li>
                 </ul>
-                <Link to="/subscribe" data-testid="cta-subscribe" className="npw-btn-primary mt-6">Become a supporter</Link>
+                <Link to="/register" data-testid="cta-register-free" className="npw-btn-primary mt-6">Create a free account</Link>
               </div>
               <div className="bg-[var(--npw-accent-soft)] p-6 rounded-2xl">
                 <div className="npw-eyebrow">One-off donation</div>
                 <div className="mt-3 flex items-baseline gap-2"><span className="text-[42px] font-extrabold leading-none text-[var(--npw-accent)]">£</span><span className="text-[42px] font-extrabold leading-none text-[var(--npw-accent)]">10</span><span className="text-[15px] text-[var(--npw-muted)]">or any amount</span></div>
-                <p className="mt-5 text-[15px] text-[var(--npw-muted)] leading-relaxed">Donations cover alert dispatches and verification of vets and rescues. Every pound stays with the service.</p>
-                <Link to="/donate" data-testid="cta-donate" className="npw-btn-action mt-6">Donate to the service</Link>
+                <p className="mt-5 text-[15px] text-[var(--npw-muted)] leading-relaxed">Donations help cover hosting, development and future integrations with veterinary practices, rescues and animal charities.</p>
+                <Link to="/donate" data-testid="cta-donate" className="npw-btn-action mt-6">Donate with PayPal</Link>
               </div>
             </div>
           </div>

@@ -8,25 +8,25 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!localStorage.getItem("gpr_token")) { setLoading(false); return; }
-    api.get("/auth/me").then(r => setUser(r.data)).catch(() => { localStorage.removeItem("gpr_token"); setUser(null); }).finally(() => setLoading(false));
+    if (!localStorage.getItem("npw_token")) { setLoading(false); return; }
+    api.get("/auth/me").then(r => setUser(r.data)).catch(() => { localStorage.removeItem("npw_token"); setUser(null); }).finally(() => setLoading(false));
   }, []);
 
   const login = async (email, password) => {
     const { data } = await api.post("/auth/login", { email, password });
-    if (data.access_token) localStorage.setItem("gpr_token", data.access_token);
+    if (data.access_token) localStorage.setItem("npw_token", data.access_token);
     setUser(data.user);
     return data.user;
   };
   const register = async (payload) => {
     const { data } = await api.post("/auth/register", payload);
-    if (data.access_token) localStorage.setItem("gpr_token", data.access_token);
+    if (data.access_token) localStorage.setItem("npw_token", data.access_token);
     setUser(data.user);
     return data.user;
   };
   const logout = async () => {
     try { await api.post("/auth/logout"); } catch {}
-    localStorage.removeItem("gpr_token");
+    localStorage.removeItem("npw_token");
     setUser(null);
   };
 

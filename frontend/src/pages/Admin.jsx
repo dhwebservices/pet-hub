@@ -3,7 +3,7 @@ import { Navigate } from "react-router-dom";
 import { api } from "../lib/api";
 import { useAuth } from "../lib/auth";
 
-const tabs = ["stats","users","pets","vets","rescues","support","subscriptions","donations","email-log"];
+const tabs = ["stats","users","pets","vets","rescues","support","donations","email-log"];
 
 export default function Admin() {
   const { user, loading } = useAuth();
@@ -11,13 +11,13 @@ export default function Admin() {
   const [data, setData] = useState(null);
 
   useEffect(() => {
-    if (!user || user.role !== 'admin') return;
+    if (!user || user.role !== 'administrator') return;
     setData(null);
     api.get(`/admin/${tab}`).then(r=>setData(r.data));
   }, [tab, user]);
 
   if (loading) return <div className="py-24 text-center text-[var(--npw-muted)]">Loading…</div>;
-  if (!user || user.role !== 'admin') return <Navigate to="/login"/>;
+  if (!user || user.role !== 'administrator') return <Navigate to="/login"/>;
 
   return (
     <div data-testid="admin-page" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">

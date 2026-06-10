@@ -20,7 +20,7 @@ function Brandmark() {
       </span>
       <span className="leading-tight">
         <span className="block font-bold text-[19px] text-[var(--npw-text)] tracking-tight">National Pet Watch</span>
-        <span className="block text-[12px] text-[var(--npw-muted)] -mt-0.5">UK lost &amp; found pet service</span>
+        <span className="block text-[12px] text-[var(--npw-muted)] -mt-0.5">The UK's Pet Registry &amp; Recovery Network</span>
       </span>
     </Link>
   );
@@ -48,7 +48,7 @@ export default function Layout({ children }) {
             <div className="hidden lg:flex items-center gap-3">
               {user ? (
                 <>
-                  <Link to={user.role==='admin'?'/admin':'/dashboard'} data-testid="header-dashboard" className="text-[15px] font-semibold text-[var(--npw-text)] hover:opacity-80">{user.role==='admin'?'Admin':'My dashboard'}</Link>
+                  <Link to={user.role==='administrator'?'/admin':'/dashboard'} data-testid="header-dashboard" className="text-[15px] font-semibold text-[var(--npw-text)] hover:opacity-80">{user.role==='administrator'?'Admin':'My dashboard'}</Link>
                   <button onClick={async()=>{await logout(); nav('/');}} data-testid="header-logout" className="text-[14px] text-[var(--npw-muted)] hover:text-[var(--npw-text)]">Sign out</button>
                 </>
               ) : (
@@ -73,7 +73,7 @@ export default function Layout({ children }) {
               <div className="border-t border-[var(--npw-border)] my-2"/>
               {user ? (
                 <>
-                  <Link to={user.role==='admin'?'/admin':'/dashboard'} onClick={()=>setOpen(false)} className="px-3 py-2.5 rounded-xl text-[15px] font-semibold text-[var(--npw-text)]">{user.role==='admin'?'Admin':'My dashboard'}</Link>
+                  <Link to={user.role==='administrator'?'/admin':'/dashboard'} onClick={()=>setOpen(false)} className="px-3 py-2.5 rounded-xl text-[15px] font-semibold text-[var(--npw-text)]">{user.role==='administrator'?'Admin':'My dashboard'}</Link>
                   <button onClick={async()=>{await logout(); setOpen(false); nav('/');}} className="px-3 py-2.5 rounded-xl text-left text-[15px] text-[var(--npw-muted)]">Sign out</button>
                 </>
               ) : (
@@ -118,8 +118,7 @@ export default function Layout({ children }) {
               <ul className="space-y-2.5 text-[15px]">
                 <li><Link className="text-[var(--npw-text)] hover:text-[var(--npw-primary)] underline decoration-1 underline-offset-4" to="/vet-register">For veterinary practices</Link></li>
                 <li><Link className="text-[var(--npw-text)] hover:text-[var(--npw-primary)] underline decoration-1 underline-offset-4" to="/rescue-register">For rescue organisations</Link></li>
-                <li><Link className="text-[var(--npw-text)] hover:text-[var(--npw-primary)] underline decoration-1 underline-offset-4" to="/donate">Donate</Link></li>
-                <li><Link className="text-[var(--npw-text)] hover:text-[var(--npw-primary)] underline decoration-1 underline-offset-4" to="/subscribe">Become a supporter</Link></li>
+                <li><Link className="text-[var(--npw-text)] hover:text-[var(--npw-primary)] underline decoration-1 underline-offset-4" to="/donate">Support National Pet Watch</Link></li>
               </ul>
             </nav>
             <nav aria-label="About" className="md:col-span-2">

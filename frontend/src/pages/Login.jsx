@@ -14,7 +14,7 @@ export default function Login() {
     e.preventDefault(); setErr(""); setLoading(true);
     try {
       const u = await login(email, password);
-      nav(u.role === "admin" ? "/admin" : "/dashboard");
+      nav(u.role === "administrator" ? "/admin" : "/dashboard");
     } catch (e) { setErr(fmtErr(e.response?.data?.detail) || e.message); } finally { setLoading(false); }
   };
 
@@ -23,7 +23,7 @@ export default function Login() {
       <div className="md:col-span-5">
         <div className="text-[12px] font-bold uppercase tracking-wider text-[var(--npw-muted)] mb-6">Member Sign-In</div>
         <h1 className="font-extrabold text-5xl md:text-6xl text-[var(--npw-text)] leading-[1]">Welcome <span className="text-[var(--npw-accent)]">back</span>.</h1>
-        <p className="text-[var(--npw-muted)] text-lg mt-6 max-w-md leading-[1.6]">Your dashboard, pet records, alerts and subscription all live behind this door.</p>
+        <p className="text-[var(--npw-muted)] text-lg mt-6 max-w-md leading-[1.6]">Your dashboard, pet records and recovery alerts all live behind this door.</p>
         <p className="text-[13px] text-[var(--npw-muted)] mt-10">No account yet? <Link to="/register" className="text-[var(--npw-text)] font-semibold border-b border-[var(--npw-text)]/40">Register here</Link>.</p>
       </div>
       <form onSubmit={submit} className="md:col-span-5 md:col-start-8 space-y-8">

@@ -24,7 +24,6 @@ import About from "./pages/About";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import Contact from "./pages/Contact";
-import Subscribe from "./pages/Subscribe";
 import Donate from "./pages/Donate";
 import Admin from "./pages/Admin";
 
@@ -55,10 +54,10 @@ export default function App() {
             <Route path="/contact" element={<Contact/>}/>
             <Route path="/privacy" element={<Privacy/>}/>
             <Route path="/terms" element={<Terms/>}/>
-            <Route path="/subscribe" element={<Subscribe/>}/>
+            <Route path="/subscribe" element={<Donate/>}/>
             <Route path="/donate" element={<Donate/>}/>
             <Route path="/admin" element={<Admin/>}/>
-            <Route path="*" element={<div className="max-w-2xl mx-auto px-4 py-24 text-center"><h1 className="font-display font-extrabold text-3xl text-[var(--gpr-primary)]">Not found</h1><p className="text-[var(--gpr-muted)] mt-2">The page you're looking for doesn't exist.</p></div>}/>
+            <Route path="*" element={<div className="max-w-2xl mx-auto px-4 py-24 text-center"><h1 className="font-display font-bold text-3xl text-[var(--npw-primary)]">Not found</h1><p className="text-[var(--npw-muted)] mt-2">The page you're looking for doesn't exist.</p></div>}/>
           </Routes>
           <Toaster position="top-right"/>
         </Layout>

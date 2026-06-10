@@ -4,6 +4,7 @@ ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / ".env")
 
 import os
+import re
 import uuid
 import math
 import base64
@@ -11,6 +12,7 @@ import logging
 import secrets
 import asyncio
 import httpx
+from collections import defaultdict, deque
 from datetime import datetime, timezone, timedelta
 from typing import List, Optional, Literal, Any, Dict
 
@@ -20,13 +22,22 @@ import qrcode
 from io import BytesIO
 
 from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depends, UploadFile, File, Form
-from fastapi.responses import StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field, EmailStr, ConfigDict
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-logger = logging.getLogger("gpr")
+logger = logging.getLogger("npw")
+BRAND_NAME = "National Pet Watch"
+BRAND_TAGLINE = "The UK's Pet Registry & Recovery Network"
+ROLE_SLUGS = {"owner", "veterinary_practice", "rescue_organisation", "administrator"}
+LEGACY_ROLE_MAP = {
+    "owner": "owner",
+    "vet": "veterinary_practice",
+    "rescue": "rescue_organisation",
+    "admin": "administrator",
+}
 
 # ---------------- MongoDB ----------------
 mongo_url = os.environ["MONGO_URL"]
@@ -46,6 +57,9 @@ def verify_password(pw: str, hashed: str) -> bool:
     except Exception:
         return False
 
+def normalise_role(role: str) -> str:
+    return LEGACY_ROLE_MAP.get(role, role)
+
 def make_access_token(uid: str, email: str, role: str) -> str:
     payload = {"sub": uid, "email": email, "role": role,
                "exp": datetime.now(timezone.utc) + timedelta(hours=12), "type": "access"}
@@ -57,6 +71,26 @@ def make_refresh_token(uid: str) -> str:
 
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+def validate_password_strength(password: str):
+    if len(password) < 10:
+        raise HTTPException(400, "Password must be at least 10 characters")
+    if not re.search(r"[A-Z]", password) or not re.search(r"[a-z]", password):
+        raise HTTPException(400, "Password must include upper and lower case letters")
+    if not re.search(r"\d", password):
+        raise HTTPException(400, "Password must include a number")
+    if not re.search(r"[^A-Za-z0-9]", password):
+        raise HTTPException(400, "Password must include a symbol")
+
+def csrf_token() -> str:
+    return secrets.token_urlsafe(32)
+
+def set_auth_cookies(response: Response, access: str, refresh: Optional[str] = None):
+    secure = os.environ.get("COOKIE_SECURE", "false").lower() == "true"
+    response.set_cookie("access_token", access, httponly=True, secure=secure, samesite="lax", max_age=43200, path="/")
+    if refresh:
+        response.set_cookie("refresh_token", refresh, httponly=True, secure=secure, samesite="lax", max_age=604800, path="/")
+    response.set_cookie("csrf_token", csrf_token(), httponly=False, secure=secure, samesite="lax", max_age=604800, path="/")
 
 def haversine_miles(lat1, lon1, lat2, lon2) -> float:
     R = 3958.8
@@ -75,7 +109,7 @@ async def geocode_postcode(postcode: str, country: str = "UK") -> Optional[Dict[
             r = await c.get(
                 "https://nominatim.openstreetmap.org/search",
                 params={"postalcode": postcode, "country": country, "format": "json", "limit": 1},
-                headers={"User-Agent": "GlobalPetRegistry/1.0"},
+                headers={"User-Agent": "NationalPetWatch/1.0"},
             )
             data = r.json()
             if data:
@@ -100,6 +134,7 @@ async def get_current_user(request: Request) -> dict:
         user = await db.users.find_one({"id": payload["sub"]}, {"_id": 0, "password_hash": 0})
         if not user:
             raise HTTPException(401, "User not found")
+        user["role"] = normalise_role(user.get("role", "owner"))
         return user
     except pyjwt.ExpiredSignatureError:
         raise HTTPException(401, "Token expired")
@@ -108,7 +143,8 @@ async def get_current_user(request: Request) -> dict:
 
 def require_role(*roles):
     async def dep(user: dict = Depends(get_current_user)):
-        if user.get("role") not in roles:
+        allowed = {normalise_role(role) for role in roles}
+        if normalise_role(user.get("role")) not in allowed:
             raise HTTPException(403, "Insufficient permissions")
         return user
     return dep
@@ -120,10 +156,10 @@ class EmailClient:
 
 class DummyEmail(EmailClient):
     async def send(self, to, subject, html):
-        rec = {"to": to, "subject": subject, "html": html, "sent_at": now_iso(), "status": "MOCKED"}
-        logger.info(f"[MOCKED EMAIL] to={to} subject={subject}")
+        rec = {"to": to, "subject": subject, "html": html, "sent_at": now_iso(), "status": "local"}
+        logger.info(f"[LOCAL EMAIL] to={to} subject={subject}")
         await db.email_log.insert_one({**rec, "id": str(uuid.uuid4())})
-        return {"id": "mocked", "status": "MOCKED"}
+        return {"id": "local", "status": "local"}
 
 class ResendEmail(EmailClient):
     def __init__(self, key, sender):
@@ -155,7 +191,7 @@ def tmpl_base(content: str, title: str = "National Pet Watch") -> str:
 <div style="max-width:640px;margin:0 auto;padding:32px 16px">
   <div style="text-align:center;padding:16px 0 24px"><span style="font-family:'Manrope',Arial,sans-serif;font-weight:800;font-size:22px;color:#1E3F32;letter-spacing:-0.5px">National Pet Watch</span></div>
   <div style="background:#fff;border:1px solid #E2E8E4;border-radius:12px;padding:32px">{content}</div>
-  <p style="text-align:center;color:#5F736A;font-size:12px;margin-top:24px">The Modern Pet Registry &amp; Recovery Network</p>
+  <p style="text-align:center;color:#5F736A;font-size:12px;margin-top:24px">{BRAND_TAGLINE}</p>
 </div></body></html>"""
 
 def tmpl_welcome(name):
@@ -166,6 +202,28 @@ def tmpl_welcome(name):
 def tmpl_pet_registered(pet_name):
     return tmpl_base(f"""<h1 style="font-family:'Manrope',Arial,sans-serif;color:#1E3F32;margin:0 0 12px;font-size:24px">{pet_name} is registered</h1>
 <p>{pet_name} has been added to the registry. Your pet's QR profile is now live and ready to help reunite you in an emergency.</p>""")
+
+def tmpl_found_alert(pet_name, location, notes):
+    return tmpl_base(f"""<h1 style="font-family:'Manrope',Arial,sans-serif;color:#1E3F32;margin:0 0 12px;font-size:24px">Possible found-pet match for {pet_name}</h1>
+<p>A found-pet report may match your pet.</p>
+<p><strong>Location:</strong> {location}</p>
+<p><strong>Notes:</strong> {notes}</p>""")
+
+def tmpl_sighting_alert(location, notes, reporter):
+    return tmpl_base(f"""<h1 style="font-family:'Manrope',Arial,sans-serif;color:#1E3F32;margin:0 0 12px;font-size:24px">New sighting reported</h1>
+<p><strong>Location:</strong> {location}</p>
+<p><strong>Notes:</strong> {notes}</p>
+<p><strong>Reporter:</strong> {reporter}</p>""")
+
+def tmpl_password_reset(reset_link):
+    return tmpl_base(f"""<h1 style="font-family:'Manrope',Arial,sans-serif;color:#1E3F32;margin:0 0 12px;font-size:24px">Reset your password</h1>
+<p>Use the secure link below to reset your National Pet Watch password.</p>
+<p><a href="{reset_link}" style="display:inline-block;background:#1E3F32;color:#fff;text-decoration:none;padding:12px 24px;border-radius:6px;font-weight:600">Reset password</a></p>""")
+
+def tmpl_account_verification(verify_link):
+    return tmpl_base(f"""<h1 style="font-family:'Manrope',Arial,sans-serif;color:#1E3F32;margin:0 0 12px;font-size:24px">Verify your account</h1>
+<p>Please verify your email address to help keep National Pet Watch safe and trustworthy.</p>
+<p><a href="{verify_link}" style="display:inline-block;background:#1E3F32;color:#fff;text-decoration:none;padding:12px 24px;border-radius:6px;font-weight:600">Verify account</a></p>""")
 
 def tmpl_lost_alert(pet, last_seen, link):
     img = pet.get("photo_url") or ""
@@ -182,46 +240,60 @@ def tmpl_lost_alert(pet, last_seen, link):
 # ---------------- Models ----------------
 class UserRegister(BaseModel):
     email: EmailStr
-    password: str
-    first_name: str
-    last_name: str
-    phone: Optional[str] = ""
-    address: Optional[str] = ""
-    town: Optional[str] = ""
-    county: Optional[str] = ""
-    postcode: Optional[str] = ""
+    password: str = Field(min_length=10, max_length=128)
+    first_name: str = Field(min_length=1, max_length=80)
+    last_name: str = Field(min_length=1, max_length=80)
+    phone: Optional[str] = Field(default="", max_length=40)
+    address: Optional[str] = Field(default="", max_length=240)
+    town: Optional[str] = Field(default="", max_length=120)
+    county: Optional[str] = Field(default="", max_length=120)
+    postcode: Optional[str] = Field(default="", max_length=16)
     country: Optional[str] = "UK"
 
 class UserLogin(BaseModel):
     email: EmailStr
-    password: str
+    password: str = Field(min_length=1, max_length=128)
 
 class PetCreate(BaseModel):
-    name: str
-    species: str
-    breed: Optional[str] = ""
-    gender: Optional[str] = ""
-    dob: Optional[str] = ""
-    color: Optional[str] = ""
-    weight: Optional[str] = ""
-    distinguishing_features: Optional[str] = ""
-    microchip: Optional[str] = ""
-    medical_conditions: Optional[str] = ""
-    medication: Optional[str] = ""
+    name: str = Field(min_length=1, max_length=120)
+    species: str = Field(min_length=1, max_length=80)
+    breed: Optional[str] = Field(default="", max_length=120)
+    gender: Optional[str] = Field(default="", max_length=40)
+    dob: Optional[str] = Field(default="", max_length=32)
+    color: Optional[str] = Field(default="", max_length=120)
+    weight: Optional[str] = Field(default="", max_length=40)
+    distinguishing_features: Optional[str] = Field(default="", max_length=1000)
+    microchip: Optional[str] = Field(default="", max_length=40)
+    medical_conditions: Optional[str] = Field(default="", max_length=1000)
+    medication: Optional[str] = Field(default="", max_length=1000)
     neutered: Optional[bool] = False
     behaviour_notes: Optional[str] = ""
-    emergency_contact_name: Optional[str] = ""
-    emergency_contact_phone: Optional[str] = ""
+    emergency_contact_name: Optional[str] = Field(default="", max_length=120)
+    emergency_contact_phone: Optional[str] = Field(default="", max_length=40)
     photo_url: Optional[str] = ""
+
+class EmergencyContactCreate(BaseModel):
+    pet_id: str
+    name: str = Field(min_length=1, max_length=120)
+    phone: str = Field(min_length=1, max_length=40)
+    email: Optional[EmailStr] = None
+    relationship: Optional[str] = Field(default="", max_length=80)
+    priority: int = Field(default=1, ge=1, le=10)
+
+class PetDocumentCreate(BaseModel):
+    pet_id: str
+    document_type: Literal["vaccination", "insurance", "vet", "other"]
+    filename: str = Field(min_length=1, max_length=180)
+    url: str = Field(min_length=1)
 
 class LostReportCreate(BaseModel):
     pet_id: str
-    last_seen_date: str
-    last_seen_location: str
+    last_seen_date: str = Field(min_length=1, max_length=32)
+    last_seen_location: str = Field(min_length=1, max_length=240)
     last_seen_lat: Optional[float] = None
     last_seen_lon: Optional[float] = None
-    description: str
-    reward: Optional[str] = ""
+    description: str = Field(min_length=1, max_length=2000)
+    reward: Optional[str] = Field(default="", max_length=80)
 
 class FoundReportCreate(BaseModel):
     species: str
@@ -257,7 +329,7 @@ class VetRegister(BaseModel):
     postcode: str
     country: Optional[str] = "UK"
     license_number: Optional[str] = ""
-    password: str
+    password: str = Field(min_length=10, max_length=128)
 
 class RescueRegister(BaseModel):
     organisation_name: str
@@ -268,7 +340,7 @@ class RescueRegister(BaseModel):
     postcode: str
     country: Optional[str] = "UK"
     registration_number: Optional[str] = ""
-    password: str
+    password: str = Field(min_length=10, max_length=128)
 
 class SupportTicket(BaseModel):
     name: str
@@ -279,13 +351,44 @@ class SupportTicket(BaseModel):
 # ---------------- App Setup ----------------
 app = FastAPI(title="National Pet Watch API")
 api = APIRouter(prefix="/api")
+rate_limit_hits = defaultdict(deque)
+
+@app.middleware("http")
+async def security_middleware(request: Request, call_next):
+    client_ip = request.headers.get("x-forwarded-for", request.client.host if request.client else "unknown").split(",")[0].strip()
+    window_seconds = int(os.environ.get("RATE_LIMIT_WINDOW_SECONDS", "60"))
+    max_requests = int(os.environ.get("RATE_LIMIT_MAX_REQUESTS", "120"))
+    now = datetime.now(timezone.utc).timestamp()
+    hits = rate_limit_hits[client_ip]
+    while hits and hits[0] < now - window_seconds:
+        hits.popleft()
+    if len(hits) >= max_requests:
+        return JSONResponse({"detail": "Too many requests"}, status_code=429)
+    hits.append(now)
+
+    mutating = request.method in {"POST", "PUT", "PATCH", "DELETE"}
+    bearer_auth = request.headers.get("Authorization", "").startswith("Bearer ")
+    cookie_auth = bool(request.cookies.get("access_token"))
+    exempt_paths = {"/api/auth/login", "/api/auth/register", "/api/vet/register", "/api/rescue/register"}
+    if mutating and cookie_auth and not bearer_auth and request.url.path not in exempt_paths:
+        if request.headers.get("x-csrf-token") != request.cookies.get("csrf_token"):
+            return JSONResponse({"detail": "Invalid CSRF token"}, status_code=403)
+
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "geolocation=(self), camera=(), microphone=()"
+    return response
 
 # ---------------- Auth Endpoints ----------------
 @api.post("/auth/register")
 async def register(data: UserRegister, response: Response):
     email = data.email.lower()
+    validate_password_strength(data.password)
     if await db.users.find_one({"email": email}):
         raise HTTPException(400, "Email already registered")
+    role = await db.roles.find_one({"slug": "owner"}, {"_id": 0})
     coords = await geocode_postcode(data.postcode, data.country or "UK") if data.postcode else None
     user = {
         "id": str(uuid.uuid4()),
@@ -302,15 +405,14 @@ async def register(data: UserRegister, response: Response):
         "lat": coords["lat"] if coords else None,
         "lon": coords["lon"] if coords else None,
         "role": "owner",
-        "subscription_tier": "free",
+        "role_id": role["id"] if role else None,
         "created_at": now_iso(),
     }
     await db.users.insert_one(user)
     user.pop("password_hash", None); user.pop("_id", None)
     access = make_access_token(user["id"], email, "owner")
     refresh = make_refresh_token(user["id"])
-    response.set_cookie("access_token", access, httponly=True, samesite="lax", max_age=43200, path="/")
-    response.set_cookie("refresh_token", refresh, httponly=True, samesite="lax", max_age=604800, path="/")
+    set_auth_cookies(response, access, refresh)
     em = get_email_client()
     asyncio.create_task(em.send([email], "Welcome to National Pet Watch", tmpl_welcome(data.first_name)))
     return {"user": user, "access_token": access}
@@ -321,10 +423,10 @@ async def login(data: UserLogin, response: Response):
     user = await db.users.find_one({"email": email})
     if not user or not verify_password(data.password, user["password_hash"]):
         raise HTTPException(401, "Invalid credentials")
-    access = make_access_token(user["id"], email, user.get("role", "owner"))
+    access = make_access_token(user["id"], email, normalise_role(user.get("role", "owner")))
     refresh = make_refresh_token(user["id"])
-    response.set_cookie("access_token", access, httponly=True, samesite="lax", max_age=43200, path="/")
-    response.set_cookie("refresh_token", refresh, httponly=True, samesite="lax", max_age=604800, path="/")
+    set_auth_cookies(response, access, refresh)
+    user["role"] = normalise_role(user.get("role", "owner"))
     user.pop("password_hash", None); user.pop("_id", None)
     return {"user": user, "access_token": access}
 
@@ -332,6 +434,7 @@ async def login(data: UserLogin, response: Response):
 async def logout(response: Response):
     response.delete_cookie("access_token", path="/")
     response.delete_cookie("refresh_token", path="/")
+    response.delete_cookie("csrf_token", path="/")
     return {"ok": True}
 
 @api.get("/auth/me")
@@ -374,7 +477,7 @@ async def get_pet(pet_id: str):
 async def update_pet(pet_id: str, data: PetCreate, user: dict = Depends(get_current_user)):
     pet = await db.pets.find_one({"id": pet_id})
     if not pet: raise HTTPException(404, "Pet not found")
-    if pet["owner_id"] != user["id"] and user.get("role") != "admin":
+    if pet["owner_id"] != user["id"] and user.get("role") != "administrator":
         raise HTTPException(403, "Not allowed")
     await db.pets.update_one({"id": pet_id}, {"$set": data.model_dump()})
     return {"ok": True}
@@ -383,10 +486,52 @@ async def update_pet(pet_id: str, data: PetCreate, user: dict = Depends(get_curr
 async def delete_pet(pet_id: str, user: dict = Depends(get_current_user)):
     pet = await db.pets.find_one({"id": pet_id})
     if not pet: raise HTTPException(404, "Pet not found")
-    if pet["owner_id"] != user["id"] and user.get("role") != "admin":
+    if pet["owner_id"] != user["id"] and user.get("role") != "administrator":
         raise HTTPException(403, "Not allowed")
     await db.pets.delete_one({"id": pet_id})
     return {"ok": True}
+
+@api.post("/emergency-contacts")
+async def create_emergency_contact(data: EmergencyContactCreate, user: dict = Depends(get_current_user)):
+    pet = await db.pets.find_one({"id": data.pet_id})
+    if not pet:
+        raise HTTPException(404, "Pet not found")
+    if pet["owner_id"] != user["id"] and user.get("role") != "administrator":
+        raise HTTPException(403, "Not allowed")
+    rec = {**data.model_dump(), "id": str(uuid.uuid4()), "owner_id": pet["owner_id"], "created_at": now_iso()}
+    await db.emergency_contacts.insert_one(rec)
+    rec.pop("_id", None)
+    return rec
+
+@api.get("/pets/{pet_id}/emergency-contacts")
+async def list_emergency_contacts(pet_id: str, user: dict = Depends(get_current_user)):
+    pet = await db.pets.find_one({"id": pet_id})
+    if not pet:
+        raise HTTPException(404, "Pet not found")
+    if pet["owner_id"] != user["id"] and user.get("role") != "administrator":
+        raise HTTPException(403, "Not allowed")
+    return await db.emergency_contacts.find({"pet_id": pet_id}, {"_id": 0}).sort("priority", 1).to_list(100)
+
+@api.post("/pet-documents")
+async def create_pet_document(data: PetDocumentCreate, user: dict = Depends(get_current_user)):
+    pet = await db.pets.find_one({"id": data.pet_id})
+    if not pet:
+        raise HTTPException(404, "Pet not found")
+    if pet["owner_id"] != user["id"] and user.get("role") != "administrator":
+        raise HTTPException(403, "Not allowed")
+    rec = {**data.model_dump(), "id": str(uuid.uuid4()), "owner_id": pet["owner_id"], "created_at": now_iso()}
+    await db.pet_documents.insert_one(rec)
+    rec.pop("_id", None)
+    return rec
+
+@api.get("/pets/{pet_id}/documents")
+async def list_pet_documents(pet_id: str, user: dict = Depends(get_current_user)):
+    pet = await db.pets.find_one({"id": pet_id})
+    if not pet:
+        raise HTTPException(404, "Pet not found")
+    if pet["owner_id"] != user["id"] and user.get("role") != "administrator":
+        raise HTTPException(403, "Not allowed")
+    return await db.pet_documents.find({"pet_id": pet_id}, {"_id": 0}).sort("created_at", -1).to_list(100)
 
 @api.get("/pets/{pet_id}/qr")
 async def pet_qr(pet_id: str):
@@ -446,12 +591,28 @@ async def dispatch_lost_alerts(lost: dict, pet: dict):
             html = tmpl_lost_alert(pet,
                 {"location": lost["last_seen_location"], "date": lost["last_seen_date"],
                  "description": lost["description"]}, link)
-            await em.send([u["email"]], f"Lost Pet Alert: {pet['name']} near {u.get('town','your area')}", html)
+            notification_id = str(uuid.uuid4())
+            notification = {
+                "id": notification_id,
+                "user_id": u["id"],
+                "type": "lost_pet_alert",
+                "channel": "in_app",
+                "title": f"Lost pet near {u.get('town') or 'your area'}",
+                "body": f"{pet['name']} was reported missing nearby.",
+                "lost_report_id": lost["id"],
+                "read": False,
+                "created_at": now_iso(),
+            }
+            await db.notifications.insert_one(notification)
+            queue_id = str(uuid.uuid4())
             await db.notification_queue.insert_one({
-                "id": str(uuid.uuid4()), "user_id": u["id"], "type": "lost_alert",
-                "lost_report_id": lost["id"], "status": "sent", "created_at": now_iso(),
+                "id": queue_id, "notification_id": notification_id, "user_id": u["id"],
+                "type": "lost_pet_alert", "channel": "email", "status": "queued",
+                "lost_report_id": lost["id"], "created_at": now_iso(),
                 "distance_miles": round(d, 2),
             })
+            await em.send([u["email"]], f"Lost Pet Alert: {pet['name']} near {u.get('town','your area')}", html)
+            await db.notification_queue.update_one({"id": queue_id}, {"$set": {"status": "sent", "sent_at": now_iso()}})
             sent += 1
     await db.lost_reports.update_one({"id": lost["id"]}, {"$set": {"alerts_sent": sent}})
     logger.info(f"Dispatched {sent} lost alerts for pet {pet['name']}")
@@ -461,7 +622,7 @@ async def dispatch_lost_alerts(lost: dict, pet: dict):
 async def report_lost(data: LostReportCreate, user: dict = Depends(get_current_user)):
     pet = await db.pets.find_one({"id": data.pet_id})
     if not pet: raise HTTPException(404, "Pet not found")
-    if pet["owner_id"] != user["id"] and user.get("role") not in ("admin", "vet", "rescue"):
+    if pet["owner_id"] != user["id"] and user.get("role") not in ("administrator", "veterinary_practice", "rescue_organisation"):
         raise HTTPException(403, "Not allowed")
     lat, lon = data.last_seen_lat, data.last_seen_lon
     if (lat is None or lon is None) and data.last_seen_location:
@@ -509,7 +670,7 @@ async def get_lost(report_id: str):
 async def mark_pet_found(report_id: str, user: dict = Depends(get_current_user)):
     lost = await db.lost_reports.find_one({"id": report_id})
     if not lost: raise HTTPException(404, "Not found")
-    if lost["owner_id"] != user["id"] and user.get("role") != "admin":
+    if lost["owner_id"] != user["id"] and user.get("role") != "administrator":
         raise HTTPException(403, "Not allowed")
     await db.lost_reports.update_one({"id": report_id}, {"$set": {"status": "found", "resolved_at": now_iso()}})
     await db.pets.update_one({"id": lost["pet_id"]}, {"$set": {"status": "registered"}})
@@ -534,7 +695,7 @@ async def report_found(data: FoundReportCreate):
             if owner:
                 em = get_email_client()
                 asyncio.create_task(em.send([owner["email"]], f"Possible match for {pet['name']}",
-                    tmpl_base(f"<h2>Possible found-pet match</h2><p>A pet matching {pet['name']}'s microchip ({data.microchip}) was reported found at {data.location} on {now_iso()[:10]}.</p><p>{data.notes}</p><p>Contact: {data.reporter_name} — {data.reporter_email}</p>")))
+                    tmpl_found_alert(pet["name"], data.location, data.notes)))
     return rec
 
 @api.get("/found")
@@ -554,18 +715,18 @@ async def report_sighting(data: SightingCreate):
     owner = await db.users.find_one({"id": lost["owner_id"]})
     if owner and pet:
         em = get_email_client()
-        asyncio.create_task(em.send([owner["email"]], f"New sighting reported for {pet['name']}",
-            tmpl_base(f"""<h2>New sighting reported</h2>
-<p><strong>Location:</strong> {data.location}</p>
-<p><strong>Notes:</strong> {data.notes}</p>
-<p><strong>From:</strong> {data.reporter_name} — {data.reporter_email}{' / ' + data.reporter_phone if data.reporter_phone else ''}</p>""")))
+        asyncio.create_task(em.send(
+            [owner["email"]],
+            f"New sighting reported for {pet['name']}",
+            tmpl_sighting_alert(data.location, data.notes, f"{data.reporter_name} - {data.reporter_email}"),
+        ))
     return rec
 
 @api.get("/sightings/{lost_report_id}")
 async def list_sightings(lost_report_id: str, user: dict = Depends(get_current_user)):
     lost = await db.lost_reports.find_one({"id": lost_report_id})
     if not lost: raise HTTPException(404, "Not found")
-    if lost["owner_id"] != user["id"] and user.get("role") not in ("admin",):
+    if lost["owner_id"] != user["id"] and user.get("role") not in ("administrator",):
         raise HTTPException(403, "Not allowed")
     items = await db.sighting_reports.find({"lost_report_id": lost_report_id}, {"_id": 0}).sort("created_at", -1).to_list(200)
     return items
@@ -610,8 +771,10 @@ async def search(q: str = "", species: str = "", status: str = ""):
 # ---------------- Vet / Rescue Registration ----------------
 @api.post("/vet/register")
 async def vet_register(data: VetRegister, response: Response):
+    validate_password_strength(data.password)
     if await db.users.find_one({"email": data.email.lower()}):
         raise HTTPException(400, "Email already registered")
+    role = await db.roles.find_one({"slug": "veterinary_practice"}, {"_id": 0})
     coords = await geocode_postcode(data.postcode, data.country or "UK")
     user = {
         "id": str(uuid.uuid4()),
@@ -622,7 +785,8 @@ async def vet_register(data: VetRegister, response: Response):
         "phone": data.phone, "address": data.address, "postcode": data.postcode,
         "country": data.country, "lat": coords["lat"] if coords else None,
         "lon": coords["lon"] if coords else None,
-        "role": "vet", "subscription_tier": "free", "created_at": now_iso(),
+        "role": "veterinary_practice", "role_id": role["id"] if role else None,
+        "created_at": now_iso(),
     }
     await db.users.insert_one(user)
     practice = {
@@ -630,14 +794,16 @@ async def vet_register(data: VetRegister, response: Response):
         "license_number": data.license_number, "verified": False, "created_at": now_iso(),
     }
     await db.veterinary_practices.insert_one(practice)
-    access = make_access_token(user["id"], user["email"], "vet")
-    response.set_cookie("access_token", access, httponly=True, samesite="lax", max_age=43200, path="/")
+    access = make_access_token(user["id"], user["email"], "veterinary_practice")
+    set_auth_cookies(response, access)
     return {"ok": True, "practice_id": practice["id"]}
 
 @api.post("/rescue/register")
 async def rescue_register(data: RescueRegister, response: Response):
+    validate_password_strength(data.password)
     if await db.users.find_one({"email": data.email.lower()}):
         raise HTTPException(400, "Email already registered")
+    role = await db.roles.find_one({"slug": "rescue_organisation"}, {"_id": 0})
     coords = await geocode_postcode(data.postcode, data.country or "UK")
     user = {
         "id": str(uuid.uuid4()), "email": data.email.lower(),
@@ -647,14 +813,15 @@ async def rescue_register(data: RescueRegister, response: Response):
         "phone": data.phone, "address": data.address, "postcode": data.postcode,
         "country": data.country, "lat": coords["lat"] if coords else None,
         "lon": coords["lon"] if coords else None,
-        "role": "rescue", "subscription_tier": "free", "created_at": now_iso(),
+        "role": "rescue_organisation", "role_id": role["id"] if role else None,
+        "created_at": now_iso(),
     }
     await db.users.insert_one(user)
     org = {"id": str(uuid.uuid4()), "user_id": user["id"], "organisation_name": data.organisation_name,
            "registration_number": data.registration_number, "verified": False, "created_at": now_iso()}
     await db.rescue_organisations.insert_one(org)
-    access = make_access_token(user["id"], user["email"], "rescue")
-    response.set_cookie("access_token", access, httponly=True, samesite="lax", max_age=43200, path="/")
+    access = make_access_token(user["id"], user["email"], "rescue_organisation")
+    set_auth_cookies(response, access)
     return {"ok": True, "rescue_id": org["id"]}
 
 # ---------------- Support ----------------
@@ -664,39 +831,6 @@ async def support(data: SupportTicket):
     await db.support_tickets.insert_one(rec)
     rec.pop("_id", None)
     return rec
-
-# ---------------- Subscriptions (Stripe) ----------------
-@api.post("/subscriptions/checkout")
-async def create_subscription(user: dict = Depends(get_current_user)):
-    sk = os.environ.get("STRIPE_SECRET_KEY", "")
-    price_id = os.environ.get("STRIPE_PRICE_ID_PREMIUM", "")
-    if not sk or not price_id:
-        # MOCKED — return simulated checkout
-        rec = {"id": str(uuid.uuid4()), "user_id": user["id"], "tier": "premium",
-               "status": "active", "mocked": True, "started_at": now_iso(),
-               "amount": 2.99, "currency": "gbp"}
-        await db.subscriptions.insert_one(rec)
-        await db.users.update_one({"id": user["id"]}, {"$set": {"subscription_tier": "premium"}})
-        return {"mocked": True, "url": None, "message": "Stripe not configured — premium activated in MOCKED mode."}
-    import stripe
-    stripe.api_key = sk
-    frontend = os.environ.get("FRONTEND_URL", "http://localhost:3000")
-    session = stripe.checkout.Session.create(
-        mode="subscription",
-        customer_email=user["email"],
-        line_items=[{"price": price_id, "quantity": 1}],
-        success_url=f"{frontend}/dashboard?subscription=success",
-        cancel_url=f"{frontend}/subscribe?canceled=true",
-        metadata={"user_id": user["id"]},
-    )
-    return {"url": session.url, "id": session.id}
-
-@api.post("/subscriptions/cancel")
-async def cancel_subscription(user: dict = Depends(get_current_user)):
-    await db.users.update_one({"id": user["id"]}, {"$set": {"subscription_tier": "free"}})
-    await db.subscriptions.update_many({"user_id": user["id"], "status": "active"},
-                                        {"$set": {"status": "canceled", "canceled_at": now_iso()}})
-    return {"ok": True}
 
 # ---------------- PayPal Donations ----------------
 async def paypal_token():
@@ -715,9 +849,9 @@ async def create_donation(amount: float = 10.0, currency: str = "GBP"):
     tok = await paypal_token()
     if not tok:
         rec = {"id": str(uuid.uuid4()), "amount": amount, "currency": currency,
-               "status": "mocked", "mocked": True, "created_at": now_iso()}
+               "status": "recorded", "provider": "paypal-hosted-button", "created_at": now_iso()}
         await db.donations.insert_one(rec)
-        return {"mocked": True, "order_id": rec["id"]}
+        return {"order_id": rec["id"], "donation_url": os.environ.get("PAYPAL_DONATE_URL", "https://www.paypal.com/donate/?hosted_button_id=FN55GF47FEC4J")}
     token, base = tok
     async with httpx.AsyncClient(timeout=15) as c:
         r = await c.post(f"{base}/v2/checkout/orders",
@@ -733,8 +867,8 @@ async def create_donation(amount: float = 10.0, currency: str = "GBP"):
 async def capture_donation(order_id: str):
     tok = await paypal_token()
     if not tok:
-        await db.donations.update_one({"id": order_id}, {"$set": {"status": "captured_mocked"}})
-        return {"ok": True, "mocked": True}
+        await db.donations.update_one({"id": order_id}, {"$set": {"status": "recorded"}})
+        return {"ok": True}
     token, base = tok
     async with httpx.AsyncClient(timeout=15) as c:
         r = await c.post(f"{base}/v2/checkout/orders/{order_id}/capture",
@@ -744,7 +878,7 @@ async def capture_donation(order_id: str):
 
 # ---------------- Admin Endpoints ----------------
 @api.get("/admin/stats")
-async def admin_stats(user: dict = Depends(require_role("admin"))):
+async def admin_stats(user: dict = Depends(require_role("administrator"))):
     return {
         "users": await db.users.count_documents({}),
         "pets": await db.pets.count_documents({}),
@@ -753,32 +887,31 @@ async def admin_stats(user: dict = Depends(require_role("admin"))):
         "sightings": await db.sighting_reports.count_documents({}),
         "vets": await db.veterinary_practices.count_documents({}),
         "rescues": await db.rescue_organisations.count_documents({}),
-        "subscriptions_active": await db.subscriptions.count_documents({"status": "active"}),
         "support_tickets_open": await db.support_tickets.count_documents({"status": "open"}),
     }
 
 @api.get("/admin/users")
-async def admin_users(user: dict = Depends(require_role("admin"))):
+async def admin_users(user: dict = Depends(require_role("administrator"))):
     return await db.users.find({}, {"_id": 0, "password_hash": 0}).sort("created_at", -1).to_list(500)
 
 @api.get("/admin/pets")
-async def admin_pets(user: dict = Depends(require_role("admin"))):
+async def admin_pets(user: dict = Depends(require_role("administrator"))):
     return await db.pets.find({}, {"_id": 0}).sort("created_at", -1).to_list(500)
 
 @api.get("/admin/vets")
-async def admin_vets(user: dict = Depends(require_role("admin"))):
+async def admin_vets(user: dict = Depends(require_role("administrator"))):
     return await db.veterinary_practices.find({}, {"_id": 0}).to_list(500)
 
 @api.get("/admin/rescues")
-async def admin_rescues(user: dict = Depends(require_role("admin"))):
+async def admin_rescues(user: dict = Depends(require_role("administrator"))):
     return await db.rescue_organisations.find({}, {"_id": 0}).to_list(500)
 
 @api.get("/admin/support")
-async def admin_support(user: dict = Depends(require_role("admin"))):
+async def admin_support(user: dict = Depends(require_role("administrator"))):
     return await db.support_tickets.find({}, {"_id": 0}).sort("created_at", -1).to_list(500)
 
 @api.post("/admin/verify/{kind}/{id}")
-async def admin_verify(kind: str, id: str, user: dict = Depends(require_role("admin"))):
+async def admin_verify(kind: str, id: str, user: dict = Depends(require_role("administrator"))):
     col = {"vet": db.veterinary_practices, "rescue": db.rescue_organisations}.get(kind)
     if not col: raise HTTPException(400, "Invalid kind")
     await col.update_one({"id": id}, {"$set": {"verified": True, "verified_at": now_iso()}})
@@ -787,15 +920,11 @@ async def admin_verify(kind: str, id: str, user: dict = Depends(require_role("ad
     return {"ok": True}
 
 @api.get("/admin/donations")
-async def admin_donations(user: dict = Depends(require_role("admin"))):
+async def admin_donations(user: dict = Depends(require_role("administrator"))):
     return await db.donations.find({}, {"_id": 0}).sort("created_at", -1).to_list(500)
 
-@api.get("/admin/subscriptions")
-async def admin_subs(user: dict = Depends(require_role("admin"))):
-    return await db.subscriptions.find({}, {"_id": 0}).sort("started_at", -1).to_list(500)
-
 @api.get("/admin/email-log")
-async def admin_email_log(user: dict = Depends(require_role("admin"))):
+async def admin_email_log(user: dict = Depends(require_role("administrator"))):
     return await db.email_log.find({}, {"_id": 0}).sort("sent_at", -1).to_list(200)
 
 # ---------------- Health ----------------
@@ -814,14 +943,16 @@ app.add_middleware(
 
 # ---------------- Startup ----------------
 async def seed_admin():
-    email = os.environ.get("ADMIN_EMAIL", "admin@globalpetregistry.com")
-    pw = os.environ.get("ADMIN_PASSWORD", "Admin@2025!")
+    email = os.environ.get("ADMIN_EMAIL", "admin@nationalpetwatch.co.uk")
+    pw = os.environ.get("ADMIN_PASSWORD", "ChangeMe-Admin-2026!")
+    role = await db.roles.find_one({"slug": "administrator"}, {"_id": 0})
     existing = await db.users.find_one({"email": email})
     if not existing:
         await db.users.insert_one({
             "id": str(uuid.uuid4()), "email": email, "password_hash": hash_password(pw),
-            "first_name": "Platform", "last_name": "Admin", "role": "admin",
-            "subscription_tier": "premium", "created_at": now_iso(),
+            "first_name": "Platform", "last_name": "Admin", "role": "administrator",
+            "role_id": role["id"] if role else None,
+            "created_at": now_iso(),
             "phone": "", "address": "", "town": "", "county": "", "postcode": "",
             "country": "UK", "lat": None, "lon": None,
         })
@@ -829,13 +960,44 @@ async def seed_admin():
     elif not verify_password(pw, existing["password_hash"]):
         await db.users.update_one({"email": email}, {"$set": {"password_hash": hash_password(pw)}})
 
+async def seed_roles():
+    roles = [
+        ("owner", "Owner"),
+        ("veterinary_practice", "Veterinary Practice"),
+        ("rescue_organisation", "Rescue Organisation"),
+        ("administrator", "Administrator"),
+    ]
+    for slug, name in roles:
+        await db.roles.update_one(
+            {"slug": slug},
+            {"$setOnInsert": {"id": str(uuid.uuid4()), "slug": slug, "name": name, "created_at": now_iso()}},
+            upsert=True,
+        )
+
+async def migrate_legacy_roles():
+    role_docs = await db.roles.find({}, {"_id": 0}).to_list(50)
+    role_ids = {r["slug"]: r["id"] for r in role_docs}
+    async for user in db.users.find({}, {"_id": 0, "id": 1, "role": 1}):
+        slug = normalise_role(user.get("role", "owner"))
+        await db.users.update_one({"id": user["id"]}, {"$set": {"role": slug, "role_id": role_ids.get(slug)}})
+
 @app.on_event("startup")
 async def on_startup():
+    await seed_roles()
     await db.users.create_index("email", unique=True)
+    await db.users.create_index("role_id")
     await db.pets.create_index("owner_id")
     await db.pets.create_index("microchip")
+    await db.pet_photos.create_index("owner_id")
+    await db.pet_documents.create_index("pet_id")
+    await db.emergency_contacts.create_index("pet_id")
     await db.lost_reports.create_index("status")
+    await db.lost_reports.create_index("pet_id")
     await db.found_reports.create_index("status")
+    await db.sighting_reports.create_index("lost_report_id")
+    await db.notifications.create_index("user_id")
+    await db.notification_queue.create_index("status")
+    await migrate_legacy_roles()
     await seed_admin()
 
 @app.on_event("shutdown")
