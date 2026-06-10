@@ -1,0 +1,11 @@
+{
+  "name": "national-pet-watch",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build:cloudflare": "cd frontend && npm ci && npm run build:cloudflare && rm -rf ../build && cp -R build ../build"
+  },
+  "engines": {
+    "node": "20.x"
+  }
+}
